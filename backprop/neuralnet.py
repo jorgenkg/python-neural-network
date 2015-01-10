@@ -66,61 +66,62 @@ class NeuralNet:
         return [w for l in self.weights for w in l.flat]
     #end
     
-    def backpropagation(self, training_data, ERROR_LIMIT=1e-3, learning_rate=0.3 ):
+    def backpropagation(self, trainingset, ERROR_LIMIT=1e-3, learning_rate=0.3 ):
         def addBias(A):
             # Add 1 as bias.
             return np.hstack((np.ones((A.shape[0],1)),A))
         #end addBias
         
-        assert training_data[0].features.shape[1] == self.n_inputs, "ERROR: input size varies from the defined input setting"
-        assert len(training_data[0].target) == self.n_outputs, "ERROR: output size varies from the defined output setting"
+        assert trainingset[0].features.shape[0] == self.n_inputs, "ERROR: input size varies from the defined input setting"
+        assert trainingset[0].targets.shape[0] == self.n_outputs, "ERROR: output size varies from the defined output setting"
+        
+        training_data = np.array( [instance.features for instance in trainingset ] )
+        training_targets = np.array( [instance.targets for instance in trainingset ] )
         
         output_activation_function = self.activation_functions[-1]
         
         MSE = ( ) # inf
-        neterror = np.zeros( shape=( len(training_data), self.n_outputs ) )
+        neterror = None
         
         epoch = 0
         while MSE>ERROR_LIMIT:
             epoch += 1
             
-            for n,instance in enumerate(training_data):
-                input_layers = self.update( instance.features, trace=True )
-                out = input_layers[-1]
+            input_layers = self.update( training_data, trace=True )
+            out = input_layers[-1]
+            
+            error = training_targets - out
+            
+            neterror = error
+            
+            #deltas = [error, ]
+            deltas = [ np.multiply( output_activation_function( out, derivative = True ), error ) ]
+            
+            # Loop over the weight layers in reversed order to calculate the deltas
+            loop = itertools.izip(
+                            xrange(len(self.weights)-1, -1, -1),
+                            reversed(self.weights),
+                            reversed(input_layers[:-1]),
+                        )
+            
+            for i, weight_layer, input_signals in loop:
+                # The delta calculated from the previous layer.
+                prev_delta = deltas[-1]
                 
-                error = instance.target - out
+                if i!= 0:
+                    """Do not calculate the delta unnecessarily."""
+                    # Skipping the bias weight during calculation.
+                    weight_delta = np.dot( prev_delta, weight_layer[1:,:].T )
+            
+                    # Calculate the delta for the subsequent layer
+                    delta = np.multiply(  weight_delta, self.activation_functions[i-1]( input_signals, derivative=True) )
+                    deltas.append( delta )
+                  
+                # Calculate weight change 
+                dW = learning_rate * np.dot( addBias(input_signals).T, prev_delta )
                 
-                neterror[n,:] = error
-                
-                #deltas = [error, ]
-                deltas = [ np.multiply( output_activation_function( out, derivative = True ), error ) ]
-                
-                # Loop over the weight layers in reversed order to calculate the deltas
-                loop = itertools.izip(
-                                xrange(len(self.weights)-1, -1, -1),
-                                reversed(self.weights),
-                                reversed(input_layers[:-1]),
-                                reversed(self.activation_functions[:-1])
-                            )
-                
-                for i, weight_layer, input_signals, activation_function in loop:
-                    # The delta calculated from the previous layer.
-                    prev_delta = deltas[-1]
-                    
-                    if i!= 0:
-                        """Do not calculate the delta unnecessarily."""
-                        # Skipping the bias weight during calculation.
-                        weight_delta = np.dot( prev_delta, weight_layer[1:,:].T )
-                
-                        # Calculate the delta for the subsequent layer
-                        delta = np.multiply(  weight_delta, self.activation_functions[i]( input_signals, derivative=True) )
-                        deltas.append( delta )
-                      
-                    # Calculate weight change 
-                    dW = learning_rate * np.dot( addBias(input_signals).T, prev_delta )
-                    
-                    # Update weights
-                    self.weights[ i ] += dW
+                # Update weights
+                self.weights[ i ] += dW
             
             MSE = np.mean( np.power(neterror,2) )
             if epoch%1000==0: print "* current network error:", MSE
