@@ -17,6 +17,18 @@ def sigmoid_function( signal, derivative=False ):
         return signal
 #end activation function
 
+def ReLU_function( signal, derivative=False ):
+    # Prevent overflow.
+    signal = np.clip( signal, -500, 500 )
+    
+    if derivative:
+        # Return the partial derivation of the activation function
+        return expit( signal )
+    else:
+        # Return the activation signal
+        return np.log(1 + np.exp(signal))
+#end activation function
+
 def tanh_function( signal, derivative=False ):
     # Calculate activation signal
     signal = np.tanh( signal )
