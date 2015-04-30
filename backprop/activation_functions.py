@@ -41,7 +41,7 @@ def ReLU_function( signal, derivative=False ):
         return expit( signal )
     else:
         # Return the activation signal
-        return np.max(0, signal )
+        return np.clip( signal, 0, 500 )
 #end activation function
 
 def tanh_function( signal, derivative=False ):
