@@ -66,7 +66,7 @@ class NeuralNet:
         return [w for l in self.weights for w in l.flat]
     #end
     
-    def backpropagation(self, trainingset, ERROR_LIMIT=1e-3, learning_rate=0.3 ):
+    def backpropagation(self, trainingset, ERROR_LIMIT=1e-3, learning_rate=0.3, momentum_factor=0.9  ):
         def addBias(A):
             # Add 1 as bias.
             return np.hstack((np.ones((A.shape[0],1)),A))
@@ -82,6 +82,8 @@ class NeuralNet:
         
         MSE = ( ) # inf
         neterror = None
+        
+        momentum = collections.defaultdict( int )
         
         epoch = 0
         while MSE>ERROR_LIMIT:
@@ -118,7 +120,10 @@ class NeuralNet:
                     deltas.append( delta )
                   
                 # Calculate weight change 
-                dW = learning_rate * np.dot( addBias(input_signals).T, prev_delta )
+                dW = learning_rate * np.dot( addBias(input_signals).T, prev_delta )  + momentum_factor * momentum[i]
+                
+                # Store momentum
+                momentum[i] = dW
                 
                 # Update weights
                 self.weights[ i ] += dW
