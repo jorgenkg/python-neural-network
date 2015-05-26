@@ -138,17 +138,12 @@ class NeuralNet:
         # This is a forward operation in the network. This is how we calculate the network output
         # from a set of input signals.
         
-        def addBias(A):
-            # Add 1 as bias.
-            return np.hstack((np.ones((A.shape[0],1)),A))
-        #end addBias
-        
         output = input_values
         if trace: tracelist = [ output ]
         
         for i, weight_layer in enumerate(self.weights):
             # Loop over the network layers and calculate the output
-            output = addBias(output).dot( weight_layer )
+            output = np.dot( output, weight_layer[1:,:] ) + weight_layer[0:1,:] # implicit bias
             output = self.activation_functions[i]( output )
             if trace: tracelist.append( output )
         
