@@ -46,3 +46,16 @@ network.backpropagation(trainingset, ERROR_LIMIT = 1e-4, learning_rate=0.3, mome
  * Sigmoid
  * Rectified Linear Unit
  * Linear activation
+
+## Save and load learned weights
+```Python
+import cPickle
+
+with open('weights.pkl', 'wb') as file:
+  weight_list = network.get_weights()     # Returns a Python list object
+  cPickle.dump( weight_list , file, 2)
+
+with open('weights.pkl', 'rb') as file:
+  weight_list = cPickle.load(file)
+  network.set_weights( weight_list )
+```
