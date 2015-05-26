@@ -1,5 +1,5 @@
 # Neural network written in Python (NumPy)
-This is an implementation of a fully connected neural network in NumPy. The network may be trained by the backpropagation algorithm in an on-line fashion. 
+This is an implementation of a fully connected neural network in NumPy. The network may be batch trained by backpropagation. By implementing a batch approach, the NumPy implementation is able to harvest the power of the BLAS library to efficiently perform the required calculations. 
 
 *The code has been tested.*
 
@@ -19,4 +19,10 @@ To train the network on a custom dataset, you will have to alter the dataset spe
 ## Features:
  * Implemented with matrix operation to improve performance.
  * PYPY friendly (requires pypy-numpy).
- * Three activation functions: tanh, sigmoid and the linear activation function.
+
+## Activation functions:
+ * tanh
+ * Symmetric Elliot function (fast tanh approximation) 
+ * Sigmoid
+ * Rectified Linear Unit
+ * Linear activation
