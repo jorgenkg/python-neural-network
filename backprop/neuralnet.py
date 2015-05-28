@@ -78,49 +78,40 @@ class NeuralNet:
         training_data = np.array( [instance.features for instance in trainingset ] )
         training_targets = np.array( [instance.targets for instance in trainingset ] )
         
-        output_activation_function = self.activation_functions[-1]
-        
-        MSE = ( ) # inf
+        MSE      = ( ) # inf
         neterror = None
-        
         momentum = collections.defaultdict( int )
         
         epoch = 0
         while MSE>ERROR_LIMIT:
             epoch += 1
             
-            input_layers = self.update( training_data, trace=True )
-            out = input_layers[-1]
-            
-            error = training_targets - out
-            
-            neterror = error
-            
-            #deltas = [error, ]
-            deltas = [ np.multiply( output_activation_function( out, derivative = True ), error ) ]
+            input_layers      = self.update( training_data, trace=True )
+            out               = input_layers[-1]
+                              
+            error             = training_targets - out
+            delta             = error
+            MSE               = np.mean( np.power(error,2) )
             
             # Loop over the weight layers in reversed order to calculate the deltas
-            loop = itertools.izip(
+            loop  = itertools.izip(
                             xrange(len(self.weights)-1, -1, -1),
                             reversed(self.weights),
                             reversed(input_layers[:-1]),
                         )
+
             
             for i, weight_layer, input_signals in loop:
-                # The delta calculated from the previous layer.
-                prev_delta = deltas[-1]
+                # Calculate weight change 
+                dW = learning_rate * np.dot( addBias(input_signals).T, delta )  + momentum_factor * momentum[i]
                 
                 if i!= 0:
                     """Do not calculate the delta unnecessarily."""
                     # Skipping the bias weight during calculation.
-                    weight_delta = np.dot( prev_delta, weight_layer[1:,:].T )
+                    weight_delta = np.dot( delta, weight_layer[1:,:].T )
             
                     # Calculate the delta for the subsequent layer
                     delta = np.multiply(  weight_delta, self.activation_functions[i-1]( input_signals, derivative=True) )
-                    deltas.append( delta )
-                  
-                # Calculate weight change 
-                dW = learning_rate * np.dot( addBias(input_signals).T, prev_delta )  + momentum_factor * momentum[i]
                 
                 # Store momentum
                 momentum[i] = dW
@@ -128,9 +119,10 @@ class NeuralNet:
                 # Update weights
                 self.weights[ i ] += dW
             
-            MSE = np.mean( np.power(neterror,2) )
-            if epoch%1000==0: print "* current network error:", MSE
-        print "* epochs trained:", epoch
+            if epoch%1000==0: print "* current network error (MSE):", MSE
+        
+        print "* Converged to error bound (%.3g) with MSE = %.3g." % ( ERROR_LIMIT, MSE )
+        print "* Trained for %d epochs." % epoch
     # end backprop
     
     
