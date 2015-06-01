@@ -17,17 +17,26 @@ def sigmoid_function( signal, derivative=False ):
         return signal
 #end activation function
 
-def symmetric_elliot_function( signal, derivative=False ):
-    """
-    A fast approximation of tanh
-    """
-    
-    s = 5 # steepness
+def elliot_function( signal, derivative=False ):
+    """ A fast approximation of sigmoid """
+    s = 1 # steepness
     
     abs_signal = (1 + np.abs(signal * s))
     if derivative:
-        # Return the partial derivation of the activation function
-        return s / ( abs_signal * abs_signal )
+        return 0.5 * s / abs_signal**2
+    else:
+        # Return the activation signal
+        return 0.5*(signal * s) / abs_signal + 0.5
+#end activation function
+
+
+def symmetric_elliot_function( signal, derivative=False ):
+    """ A fast approximation of tanh """
+    s = 1 # steepness
+    
+    abs_signal = (1 + np.abs(signal * s))
+    if derivative:
+        return s / abs_signal**2
     else:
         # Return the activation signal
         return (signal * s) / abs_signal
