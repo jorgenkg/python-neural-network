@@ -1,5 +1,5 @@
 from activation_functions import sigmoid_function, tanh_function, linear_function,\
-                                 ReLU_function, symmetric_elliot_function
+                                 ReLU_function, symmetric_elliot_function, elliot_function
 from neuralnet import NeuralNet
 import numpy as np
 
