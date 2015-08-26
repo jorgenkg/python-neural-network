@@ -31,6 +31,11 @@ activation_functions = [ tanh_function ]*n_hidden_layers + [ sigmoid_function ]
 # initialize your neural network
 network              = NeuralNet(n_inputs, n_outputs, n_hiddens, n_hidden_layers, activation_functions)
 
+# save the trained network
+network.save_to_file( "trained_configuration.pkl" )
+
+# load a stored network configuration
+# network = NeuralNet.load_from_file( "trained_configuration.pkl" )
 
 # start training
 network.backpropagation(trainingset, ERROR_LIMIT = 1e-4, learning_rate=0.3, momentum_factor=0.9 )
