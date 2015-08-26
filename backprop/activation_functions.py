@@ -50,7 +50,25 @@ def ReLU_function( signal, derivative=False ):
         return expit( signal )
     else:
         # Return the activation signal
-        return np.clip( signal, 0, 500 )
+        output = np.copy( signal )
+        output[ output < 0 ] = 0
+        return output
+#end activation function
+
+def LReLU_function( signal, derivative=False ):
+    """
+    Leaky Rectified Linear Unit
+    """
+    if derivative:
+        derivate = np.copy( signal )
+        derivate[ derivate < 0 ] *= 0.01
+        # Return the partial derivation of the activation function
+        return derivate
+    else:
+        # Return the activation signal
+        output = np.copy( signal )
+        output[ output < 0 ] = 0
+        return output
 #end activation function
 
 def tanh_function( signal, derivative=False ):
