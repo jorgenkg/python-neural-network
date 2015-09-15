@@ -17,6 +17,7 @@ def sigmoid_function( signal, derivative=False ):
         return signal
 #end activation function
 
+
 def elliot_function( signal, derivative=False ):
     """ A fast approximation of sigmoid """
     s = 1 # steepness
@@ -42,18 +43,17 @@ def symmetric_elliot_function( signal, derivative=False ):
         return (signal * s) / abs_signal
 #end activation function
 
+
 def ReLU_function( signal, derivative=False ):
     if derivative:
-        # Prevent overflow.
-        signal = np.clip( signal, -500, 500 )
-        # Return the partial derivation of the activation function
-        return expit( signal )
+        derivate = np.maximum( 0, signal )
+        derivate[ derivate != 0 ] = 1
+        return derivate
     else:
         # Return the activation signal
-        output = np.copy( signal )
-        output[ output < 0 ] = 0
-        return output
+        return np.maximum( 0, signal )
 #end activation function
+
 
 def LReLU_function( signal, derivative=False ):
     """
@@ -71,6 +71,7 @@ def LReLU_function( signal, derivative=False ):
         return output
 #end activation function
 
+
 def tanh_function( signal, derivative=False ):
     # Calculate activation signal
     signal = np.tanh( signal )
@@ -82,6 +83,7 @@ def tanh_function( signal, derivative=False ):
         # Return the activation signal
         return signal
 #end activation function
+
 
 def linear_function( signal, derivative=False ):
     if derivative:
