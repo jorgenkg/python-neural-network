@@ -1,8 +1,14 @@
-import numpy as np
 import math
 import random
 import itertools
 import collections
+
+PYPY = False
+try: 
+    import numpypy as np
+    PYPY = True
+except:
+    import numpy as np
 
 class NeuralNet:
     def __init__(self, n_inputs, n_outputs, n_hiddens, n_hidden_layers, activation_functions ):
@@ -97,7 +103,7 @@ class NeuralNet:
             input_layers      = self.update( training_data, trace=True )
             out               = input_layers[-1]
                               
-            error             = training_targets - out
+            error             = out - training_targets
             delta             = error
             MSE               = np.mean( np.power(error,2) )
             
@@ -127,7 +133,7 @@ class NeuralNet:
                 momentum[i] = dW
                 
                 # Update the weights
-                self.weights[ i ] += dW
+                self.weights[ i ] -= dW
             
             if epoch%1000==0:
                 # Show the current training status
