@@ -26,7 +26,7 @@ n_hiddens       = 2 # number of nodes in each hidden layer
 
 
 # specify activation functions per layer eg: [ hidden_layer_1, hidden_layer_2, output_layer ]
-activation_functions = [ tanh_function ] * n_hidden_layers + [ sigmoid_function ]
+activation_functions = [ ReLU_function ] * n_hidden_layers + [ sigmoid_function ]
 
 
 # initialize the neural network
@@ -36,7 +36,7 @@ network = NeuralNet( n_inputs, n_outputs, n_hiddens, n_hidden_layers, activation
 # start training on test set one
 network.backpropagation( 
                 training_one,           # specify the training set
-                ERROR_LIMIT = 1e-4,     # define an acceptable error limit 
+                ERROR_LIMIT = 1e-6,     # define an acceptable error limit 
                 learning_rate = 0.3,    #
                 momentum_factor = 0.9   #
             )

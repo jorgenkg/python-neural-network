@@ -3,6 +3,7 @@ import math
 import random
 import itertools
 import collections
+from scipy.stats import bernoulli
 
 class NeuralNet:
     def __init__(self, n_inputs, n_outputs, n_hiddens, n_hidden_layers, activation_functions ):
@@ -113,7 +114,12 @@ class NeuralNet:
                 # Loop over the weight layers in reversed order to calculate the deltas
                 
                 # Calculate weight change 
-                dW = learning_rate * np.dot( addBias(input_signals).T, delta ) + momentum_factor * momentum[i]
+                in_drop = np.multiply(
+                            bernoulli.rvs( 0.9 if i == 0 else 0.5, size = addBias(input_signals).T.shape[1] ),
+                            addBias(input_signals).T
+                        )
+                
+                dW = learning_rate * np.dot( in_drop, delta ) + momentum_factor * momentum[i]
                 
                 if i!= 0:
                     """Do not calculate the delta unnecessarily."""
@@ -128,6 +134,8 @@ class NeuralNet:
                 
                 # Update the weights
                 self.weights[ i ] += dW
+            
+            
             
             if epoch%1000==0:
                 # Show the current training status
@@ -147,7 +155,10 @@ class NeuralNet:
         
         for i, weight_layer in enumerate(self.weights):
             # Loop over the network layers and calculate the output
-            output = np.dot( output, weight_layer[1:,:] ) + weight_layer[0:1,:] # implicit bias
+            if i == 0:
+                output = np.dot( output, 0.9 * weight_layer[1:,:] ) + 0.9 * weight_layer[0:1,:] # implicit bias
+            else:
+                output = np.dot( output, 0.5 * weight_layer[1:,:] ) + 0.5 * weight_layer[0:1,:] # implicit bias
             output = self.activation_functions[i]( output )
             if trace: tracelist.append( output )
         
