@@ -24,7 +24,9 @@ settings = {
     "save_trained_network"  : False,    # Whether to write the trained weights to disk
     
     "input_layer_dropout"   : 0.0,      # dropout fraction of the input layer
-    "hidden_layer_dropout"  : 0.1       # dropout fraction in all hidden layers
+    "hidden_layer_dropout"  : 0.1,      # dropout fraction in all hidden layers
+    
+    "batch_size"            : 0,        # 1 := online learning, 0 := entire trainingset as batch, else := batch learning size
 }
 
 
