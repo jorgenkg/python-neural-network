@@ -1,36 +1,50 @@
-import numpy as np
 import math
 import random
 import itertools
 import collections
+from tools import dropout, add_bias
+
+try: 
+    import numpypy as np
+except:
+    import numpy as np
+   
+    
+default_settings = {
+    # Optional settings
+    "weights_low"     : -0.1,     # Lower bound on initial weight range
+    "weights_high"    : 0.1       # Upper bound on initial weight range
+    
+}
 
 class NeuralNet:
-    def __init__(self, n_inputs, n_outputs, n_hiddens, n_hidden_layers, activation_functions ):
-        self.n_inputs = n_inputs                # Number of network input signals
-        self.n_outputs = n_outputs              # Number of desired outputs from the network
-        self.n_hiddens = n_hiddens              # Number of nodes in each hidden layer
-        self.n_hidden_layers = n_hidden_layers  # Number of hidden layers in the network
-        self.activation_functions = activation_functions
+    def __init__(self, settings ):
+        self.__dict__.update( default_settings )
+        self.__dict__.update( settings )
         
-        assert len(activation_functions)==(n_hidden_layers+1), "Requires "+(n_hidden_layers+1)+" activation functions, got: "+len(activation_functions)+"."
+        assert len(self.activation_functions) == (self.n_hidden_layers + 1), \
+            "Expected {n_expected} activation functions, but was initialized with {n_received}.".format(
+                n_expected = (self.n_hidden_layers + 1),
+                n_received = len(self.activation_functions)
+            )
         
-        if n_hidden_layers == 0:
+        if self.n_hidden_layers == 0:
             # Count the necessary number of weights for the input->output connection.
             # input -> [] -> output
-            self.n_weights = ((n_inputs+1)*n_outputs)
+            self.n_weights = (self.n_inputs + 1) * self.n_outputs
         else:
             # Count the necessary number of weights summed over all the layers.
             # input -> [n_hiddens -> n_hiddens] -> output
-            self.n_weights = (n_inputs+1)*n_hiddens+\
-                             (n_hiddens**2+n_hiddens)*(n_hidden_layers-1)+\
-                             n_hiddens*n_outputs+n_outputs
+            self.n_weights = (self.n_inputs + 1) * self.n_hiddens +\
+                             (self.n_hiddens**2  + self.n_hiddens) * (self.n_hidden_layers - 1) +\
+                             (self.n_hiddens * self.n_outputs) + self.n_outputs
         
         # Initialize the network with new randomized weights
-        self.set_weights( self.generate_weights() )
+        self.set_weights( self.generate_weights( self.weights_low, self.weights_high ) )
     #end
     
     
-    def generate_weights(self, low=-0.1, high=0.1):
+    def generate_weights(self, low = -0.1, high = 0.1):
         # Generate new random weights for all the connections in the network
         if not False:
             # Support NumPy
@@ -66,21 +80,21 @@ class NeuralNet:
         return [w for l in self.weights for w in l.flat]
     #end
     
-    def backpropagation(self, trainingset, ERROR_LIMIT=1e-3, learning_rate=0.3, momentum_factor=0.9  ):
-        def addBias(A):
-            # Add 1 as bias.
-            return np.hstack(( np.ones((A.shape[0],1)), A ))
-        #end addBias
+    def backpropagation(self, trainingset, ERROR_LIMIT = 1e-3, learning_rate = 0.3, momentum_factor = 0.9  ):
         
-        assert trainingset[0].features.shape[0] == self.n_inputs, "ERROR: input size varies from the defined input setting"
-        assert trainingset[0].targets.shape[0] == self.n_outputs, "ERROR: output size varies from the defined output setting"
+        assert trainingset[0].features.shape[0] == self.n_inputs, \
+                "ERROR: input size varies from the defined input setting"
         
-        training_data = np.array( [instance.features for instance in trainingset ] )
+        assert trainingset[0].targets.shape[0]  == self.n_outputs, \
+                "ERROR: output size varies from the defined output setting"
+        
+        
+        training_data    = np.array( [instance.features for instance in trainingset ] )
         training_targets = np.array( [instance.targets for instance in trainingset ] )
         
-        MSE      = ( ) # inf
-        neterror = None
-        momentum = collections.defaultdict( int )
+        MSE              = ( ) # inf
+        neterror         = None
+        momentum         = collections.defaultdict( int )
         
         epoch = 0
         while MSE > ERROR_LIMIT:
@@ -89,7 +103,7 @@ class NeuralNet:
             input_layers      = self.update( training_data, trace=True )
             out               = input_layers[-1]
                               
-            error             = training_targets - out
+            error             = out - training_targets
             delta             = error
             MSE               = np.mean( np.power(error,2) )
             
@@ -99,13 +113,17 @@ class NeuralNet:
                             reversed(self.weights),
                             reversed(input_layers[:-1]),
                         )
-
             
             for i, weight_layer, input_signals in loop:
                 # Loop over the weight layers in reversed order to calculate the deltas
                 
-                # Calculate weight change 
-                dW = learning_rate * np.dot( addBias(input_signals).T, delta ) + momentum_factor * momentum[i]
+                if i == 0:
+                    dropped = dropout( add_bias(input_signals).T, self.input_layer_dropout  )
+                else:
+                    dropped = dropout( add_bias(input_signals).T, self.hidden_layer_dropout )
+                
+                # Calculate weight change
+                dW = learning_rate * np.dot( dropped, delta ) + momentum_factor * momentum[i]
                 
                 if i!= 0:
                     """Do not calculate the delta unnecessarily."""
@@ -119,7 +137,7 @@ class NeuralNet:
                 momentum[i] = dW
                 
                 # Update the weights
-                self.weights[ i ] += dW
+                self.weights[ i ] -= dW
             
             if epoch%1000==0:
                 # Show the current training status
@@ -131,15 +149,19 @@ class NeuralNet:
     
     
     def update(self, input_values, trace=False ):
-        # This is a forward operation in the network. This is how we calculate the network output
-        # from a set of input signals.
+        # This is a forward operation in the network. This is how we 
+        # calculate the network output from a set of input signals.
         
         output = input_values
         if trace: tracelist = [ output ]
         
         for i, weight_layer in enumerate(self.weights):
             # Loop over the network layers and calculate the output
-            output = np.dot( output, weight_layer[1:,:] ) + weight_layer[0:1,:] # implicit bias
+            if i == 0:
+                output = np.dot( output, weight_layer[1:,:] ) + weight_layer[0:1,:] # implicit bias
+            else:
+                output = np.dot( output, weight_layer[1:,:] ) + weight_layer[0:1,:] # implicit bias
+            
             output = self.activation_functions[i]( output )
             if trace: tracelist.append( output )
         
