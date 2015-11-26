@@ -12,9 +12,11 @@ except:
     
 default_settings = {
     # Optional settings
-    "weights_low"     : -0.1,     # Lower bound on initial weight range
-    "weights_high"    : 0.1       # Upper bound on initial weight range
+    "weights_low"           : -0.1,     # Lower bound on initial weight range
+    "weights_high"          : 0.1,      # Upper bound on initial weight range
     
+    "input_layer_dropout"   : 0.0,      # dropout fraction of the input layer
+    "hidden_layer_dropout"  : 0.1       # dropout fraction in all hidden layers
 }
 
 class NeuralNet:
