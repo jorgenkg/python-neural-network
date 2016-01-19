@@ -24,9 +24,7 @@ settings = {
     "save_trained_network"  : False,    # Whether to write the trained weights to disk
     
     "input_layer_dropout"   : 0.0,      # dropout fraction of the input layer
-    "hidden_layer_dropout"  : 0.1,      # dropout fraction in all hidden layers
-    
-    "batch_size"            : 0,        # 1 := online learning, 0 := entire trainingset as batch, else := batch learning size
+    "hidden_layer_dropout"  : 0.0,      # dropout fraction in all hidden layers
 }
 
 
@@ -40,9 +38,9 @@ network = NeuralNet( settings )
 # start training on test set one
 network.backpropagation( 
                 training_one,           # specify the training set
-                ERROR_LIMIT     = 1e-6, # define an acceptable error limit 
+                ERROR_LIMIT     = 1e-3, # define an acceptable error limit 
                 learning_rate   = 0.03, # learning rate
-                momentum_factor = 0.95  # momentum
+                momentum_factor = 0.9  # momentum
             )
 
 

@@ -16,9 +16,7 @@ default_settings = {
     "weights_high"          : 0.1,      # Upper bound on initial weight range
     
     "input_layer_dropout"   : 0.0,      # dropout fraction of the input layer
-    "hidden_layer_dropout"  : 0.1,      # dropout fraction in all hidden layers
-    
-    "batch_size"            : 1,        # 1 := online learning, 0 := entire trainingset as batch, else := batch learning size
+    "hidden_layer_dropout"  : 0.0,      # dropout fraction in all hidden layers
 }
 
 class NeuralNet:
@@ -100,52 +98,49 @@ class NeuralNet:
         neterror         = None
         momentum         = collections.defaultdict( int )
         
-        batch_size       = self.batch_size if self.batch_size != 0 else training_data.shape[0]
         
         epoch = 0
         while MSE > ERROR_LIMIT:
             epoch += 1
             
-            for start in xrange( 0, len(training_data), batch_size ):
-                batch             = training_data[start : start+batch_size]
-                input_layers      = self.update( training_data, trace=True )
-                out               = input_layers[-1]
-                              
-                error             = out - training_targets
-                delta             = error
-                MSE               = np.mean( np.power(error,2) )
+            input_layers      = self.update( training_data, trace=True )
+            out               = input_layers[-1]
             
+            error             = out - training_targets
+            delta             = error
+            MSE               = np.mean( np.power(error,2) )
+        
+        
+            loop  = itertools.izip(
+                            xrange(len(self.weights)-1, -1, -1),
+                            reversed(self.weights),
+                            reversed(input_layers[:-1]),
+                        )
+        
+            for i, weight_layer, input_signals in loop:
+                # Loop over the weight layers in reversed order to calculate the deltas
             
-                loop  = itertools.izip(
-                                xrange(len(self.weights)-1, -1, -1),
-                                reversed(self.weights),
-                                reversed(input_layers[:-1]),
-                            )
+                if i == 0:
+                    dropped = dropout( add_bias(input_signals).T, self.input_layer_dropout  )
+                else:
+                    dropped = dropout( add_bias(input_signals).T, self.hidden_layer_dropout )
             
-                for i, weight_layer, input_signals in loop:
-                    # Loop over the weight layers in reversed order to calculate the deltas
-                
-                    if i == 0:
-                        dropped = dropout( add_bias(input_signals).T, self.input_layer_dropout  )
-                    else:
-                        dropped = dropout( add_bias(input_signals).T, self.hidden_layer_dropout )
-                
-                    # Calculate weight change
-                    dW = learning_rate * np.dot( dropped, delta ) + momentum_factor * momentum[i]
-                
-                    if i!= 0:
-                        """Do not calculate the delta unnecessarily."""
-                        # Skipping the bias weight during calculation.
-                        weight_delta = np.dot( delta, weight_layer[1:,:].T )
+                # Calculate weight change
+                dW = learning_rate * np.dot( dropped, delta ) + momentum_factor * momentum[i]
             
-                        # Calculate the delta for the subsequent layer
-                        delta = np.multiply(  weight_delta, self.activation_functions[i-1]( input_signals, derivative=True) )
-                
-                    # Store the momentum
-                    momentum[i] = dW
-                
-                    # Update the weights
-                    self.weights[ i ] -= dW
+                if i!= 0:
+                    """Do not calculate the delta unnecessarily."""
+                    # Skipping the bias weight during calculation.
+                    weight_delta = np.dot( delta, weight_layer[1:,:].T )
+        
+                    # Calculate the delta for the subsequent layer
+                    delta = np.multiply(  weight_delta, self.activation_functions[i-1]( input_signals, derivative=True) )
+            
+                # Store the momentum
+                momentum[i] = dW
+            
+                # Update the weights
+                self.weights[ i ] -= dW
             
             if epoch%1000==0:
                 # Show the current training status
