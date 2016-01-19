@@ -25,7 +25,7 @@ settings    = {
     "n_inputs"              : 13,        # Number of network input signals
     "layers"                : [ (3, tanh_function), (3, sigmoid_function) ],
                                         # [ (number_of_neurons, activation_function) ]
-                                        # The last pair in you list describes the number of output signals
+                                        # The last pair in your list describes the number of output signals
     
     # Optional settings
     "weights_low"           : -0.1,     # Lower bound on initial weight range
