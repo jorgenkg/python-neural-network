@@ -35,8 +35,7 @@ settings = {
     
     "input_layer_dropout"   : 0.0,      # dropout fraction of the input layer
     "hidden_layer_dropout"  : 0.1,      # dropout fraction in all hidden layers
-    
-    "batch_size"            : 0,        # 1 := online learning, 0 := entire trainingset as batch, else := batch learning size
+
 }
 
 # initialize your neural network
@@ -59,7 +58,6 @@ network.backpropagation(
 
 ## Features:
  * Implemented with matrix operation to improve performance.
- * Batch learning
  * Dropout to reduce overfitting ([as desribed here](http://jmlr.org/papers/volume15/srivastava14a/srivastava14a.pdf))
  * PYPY friendly (requires pypy-numpy).
 
@@ -72,7 +70,4 @@ network.backpropagation(
  * Linear activation
 
 ## Save and load learned weights
-```Python
-network.save_to_file() # store a trained network
-network = NeuralNet.load_from_file() # load a trained network
-```
+If the setting `save` is initialized `True`, the network will prompt you whether to store the weights after the training has succeeded.
