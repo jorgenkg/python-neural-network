@@ -1,30 +1,30 @@
 from activation_functions import sigmoid_function, tanh_function, linear_function,\
                                  LReLU_function, ReLU_function, elliot_function, symmetric_elliot_function
 from neuralnet import NeuralNet
-from tools import Instance
+from tools import Instance, load_wine_data
 import numpy as np
 
 
-# two training sets
+# Training sets
 training_one    = [ Instance( [0,0], [0] ), Instance( [0,1], [1] ), Instance( [1,0], [1] ), Instance( [1,1], [0] ) ]
-training_two    = [ Instance( [0,0], [0,0] ), Instance( [0,1], [1,1] ), Instance( [1,0], [1,1] ), Instance( [1,1], [0,0] ) ]
+
+training_wine   = load_wine_data() # Loads the dataset from UCI Machine Learning Repository http://archive.ics.uci.edu/ml/datasets/Wine
 
 
 settings = {
     # Required settings
-    "n_inputs"              : 2,        # Number of network input signals
-    "n_outputs"             : 1,        # Number of desired outputs from the network
-    "n_hidden_layers"       : 1,        # Number of nodes in each hidden layer
-    "n_hiddens"             : 2,        # Number of hidden layers in the network
-    "activation_functions"  : [ tanh_function, sigmoid_function ], # specify activation functions per layer eg: [ hidden_layer, output_layer ]
+    "n_inputs"              : 13,        # Number of network input signals
+    "layers"                : [ (3, tanh_function), (3, sigmoid_function) ],
+                                        # [ (number_of_neurons, activation_function) ]
+                                        # The last pair in you list describes the number of output signals
     
     # Optional settings
     "weights_low"           : -0.1,     # Lower bound on initial weight range
     "weights_high"          : 0.1,      # Upper bound on initial weight range
     "save_trained_network"  : False,    # Whether to write the trained weights to disk
     
-    "input_layer_dropout"   : 0.0,      # dropout fraction of the input layer
-    "hidden_layer_dropout"  : 0.0,      # dropout fraction in all hidden layers
+    "input_layer_dropout"   : 0.2,      # dropout fraction of the input layer
+    "hidden_layer_dropout"  : 0.5,      # dropout fraction in all hidden layers
 }
 
 
@@ -37,16 +37,11 @@ network = NeuralNet( settings )
 
 # start training on test set one
 network.backpropagation( 
-                training_one,           # specify the training set
-                ERROR_LIMIT     = 1e-3, # define an acceptable error limit 
-                learning_rate   = 0.3, # learning rate
-                momentum_factor = 0.95  # momentum
+                training_wine,           # specify the training set
+                ERROR_LIMIT     = 1e-3,  # define an acceptable error limit 
+                learning_rate   = 0.03,  # learning rate
+                momentum_factor = 0.45,   # momentum
+                #max_iterations  = 100,  # continues until the error limit is reach if this argument is skipped
             )
 
-# Test the network by looping through the specified dataset and print the results.
-for instance in training_one:
-    print "Input: {features} -> Output: {output} \t| target: {target}".format( 
-                features = str(instance.features), 
-                output   = str(network.update( np.array([instance.features]) )), 
-                target   = str(instance.targets)
-            )
+print "Final MSE:", network.test( training_wine )

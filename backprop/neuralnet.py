@@ -6,11 +6,10 @@ default_settings = {
     # Optional settings
     "weights_low"           : -0.1,     # Lower bound on initial weight range
     "weights_high"          : 0.1,      # Upper bound on initial weight range
+    "save_trained_network"  : False,    # Whether to write the trained weights to disk
     
     "input_layer_dropout"   : 0.0,      # dropout fraction of the input layer
     "hidden_layer_dropout"  : 0.0,      # dropout fraction in all hidden layers
-    
-    "save_trained_network"  : False,
 }
 
 class NeuralNet:
@@ -18,23 +17,9 @@ class NeuralNet:
         self.__dict__.update( default_settings )
         self.__dict__.update( settings )
         
-        assert len(self.activation_functions) == (self.n_hidden_layers + 1), \
-            "Expected {n_expected} activation functions, but was initialized with {n_received}.".format(
-                n_expected = (self.n_hidden_layers + 1),
-                n_received = len(self.activation_functions)
-            )
-        
-        if self.n_hidden_layers == 0:
-            # Count the necessary number of weights for the input->output connection.
-            # input -> [] -> output
-            self.n_weights = (self.n_inputs + 1) * self.n_outputs
-        else:
-            # Count the necessary number of weights summed over all the layers.
-            # input -> [n_hiddens -> n_hiddens] -> output
-            self.n_weights = (self.n_inputs + 1) * self.n_hiddens +\
-                             (self.n_hiddens**2  + self.n_hiddens) * (self.n_hidden_layers - 1) +\
-                             (self.n_hiddens * self.n_outputs) + self.n_outputs
-            
+        # Count the required number of weights. This will speed up the random number generation phase
+        self.n_weights = (self.n_inputs + 1) * self.layers[0][0] +\
+                         sum( (self.layers[i][0] + 1) * layer[0] for i, layer in enumerate( self.layers[1:] ) )
         
         # Initialize the network with new randomized weights
         self.set_weights( self.generate_weights( self.weights_low, self.weights_high ) )
@@ -50,13 +35,18 @@ class NeuralNet:
     def unpack(self, weight_list ):
         # This method will create a list of weight matrices. Each list element
         # corresponds to the connection between two layers.
-        if self.n_hidden_layers == 0:
-            return [ np.array(weight_list).reshape(self.n_inputs + 1, self.n_outputs) ]
-        else:
-            weight_layers = [ np.array(weight_list[:(self.n_inputs+1)*self.n_hiddens]).reshape(self.n_inputs+1,self.n_hiddens) ]
-            weight_layers += [ np.array(weight_list[(self.n_inputs+1)*self.n_hiddens+(i*(self.n_hiddens**2+self.n_hiddens)):(self.n_inputs+1)*self.n_hiddens+((i+1)*(self.n_hiddens**2+self.n_hiddens))]).reshape(self.n_hiddens+1,self.n_hiddens) for i in xrange(self.n_hidden_layers-1) ]
-            weight_layers += [ np.array(weight_list[(self.n_inputs+1)*self.n_hiddens+((self.n_hidden_layers-1)*(self.n_hiddens**2+self.n_hiddens)):]).reshape(self.n_hiddens+1,self.n_outputs) ]
+        
+        start, stop     = 0, 0
+        weight_layers   = [ ]
+        previous_shape  = self.n_inputs + 1
+        
+        for n_neurons, activation_function in self.layers:
+            stop += previous_shape * n_neurons
+            weight_layers.append( weight_list[ start:stop ].reshape( previous_shape, n_neurons ))
             
+            previous_shape = n_neurons + 1
+            start = stop
+        
         return weight_layers
     #end
     
@@ -73,35 +63,34 @@ class NeuralNet:
         return [w for l in self.weights for w in l.flat]
     #end
     
-    def backpropagation(self, trainingset, ERROR_LIMIT = 1e-3, learning_rate = 0.03, momentum_factor = 0.9  ):
+    def backpropagation(self, trainingset, ERROR_LIMIT = 1e-3, learning_rate = 0.03, momentum_factor = 0.9, max_iterations = ()  ):
         
         assert trainingset[0].features.shape[0] == self.n_inputs, \
                 "ERROR: input size varies from the defined input setting"
         
-        assert trainingset[0].targets.shape[0]  == self.n_outputs, \
+        assert trainingset[0].targets.shape[0]  == self.layers[-1][0], \
                 "ERROR: output size varies from the defined output setting"
         
         
-        training_data    = np.array( [instance.features for instance in trainingset ] )
-        training_targets = np.array( [instance.targets  for instance in trainingset ] )
+        training_data              = np.array( [instance.features for instance in trainingset ] )
+        training_targets           = np.array( [instance.targets  for instance in trainingset ] )
+                                
+        layer_indexes              = range( len(self.layers) )[::-1]    # reversed
+        momentum                   = collections.defaultdict( int )
+        MSE                        = ( ) # inf
+        epoch                      = 0
         
-        MSE              = ( ) # inf
-        momentum         = collections.defaultdict( int )
+        input_signals, derivatives = self.update( training_data, trace=True )
         
+        out                        = input_signals[-1]
+        error                      = (out - training_targets).T
+        delta                      = error * derivatives[-1]
+        MSE                        = np.mean( np.power(error,2) )
         
-        epoch = 0
-        while MSE > ERROR_LIMIT:
+        while MSE > ERROR_LIMIT and epoch < max_iterations:
             epoch += 1
             
-            input_signals, derivatives = self.update( training_data, trace=True )
-            
-            out               = input_signals[-1]
-            error             = (out - training_targets).T
-            delta             = error * derivatives[-1]
-            MSE               = np.mean( np.power(error,2) )
-            
-            
-            for i in xrange(len(self.weights)-1, -1, -1):
+            for i in layer_indexes:
                 # Loop over the weight layers in reversed order to calculate the deltas
                 
                 # perform dropout
@@ -129,6 +118,13 @@ class NeuralNet:
                 self.weights[ i ] += dW
             #end weight adjustment loop
             
+            input_signals, derivatives = self.update( training_data, trace=True )
+            out                        = input_signals[-1]
+            error                      = (out - training_targets).T
+            delta                      = error * derivatives[-1]
+            MSE                        = np.mean( np.power(error,2) )
+            
+            
             if epoch%1000==0:
                 # Show the current training status
                 print "* current network error (MSE):", MSE
@@ -144,7 +140,6 @@ class NeuralNet:
     def update(self, input_values, trace=False ):
         # This is a forward operation in the network. This is how we 
         # calculate the network output from a set of input signals.
-        
         output          = input_values
         
         if trace: 
@@ -154,12 +149,12 @@ class NeuralNet:
         for i, weight_layer in enumerate(self.weights):
             # Loop over the network layers and calculate the output
             signal = np.dot( add_bias(output), weight_layer )
-            output = self.activation_functions[i]( signal )
+            output = self.layers[i][1]( signal )
             
             if trace: 
                 outputs.append( output )
                 # Calculate the derivative, used during weight update
-                derivatives.append( self.activation_functions[i]( signal, derivative = True ).T )
+                derivatives.append( self.layers[i][1]( signal, derivative = True ).T )
         
         if trace: 
             return outputs, derivatives
@@ -167,6 +162,29 @@ class NeuralNet:
         return output
     #end
     
+    def test(self, testset, DEBUG = False ):
+        if DEBUG:
+            for instance in testset:
+                out = self.update( np.array([instance.features]) )
+                error = out - instance.targets
+                MSE = np.mean( np.power(error,2) )
+            
+                print "Output: {output} \tTarget: {target}\tError: {error}".format( 
+                            output   = str(out), 
+                            target   = str(instance.targets),
+                            error    = str(MSE)
+                        )
+        #end debug
+        
+        test_data    = np.array( [instance.features for instance in testset ] )
+        test_targets = np.array( [instance.targets  for instance in testset ] )
+        
+        out               = self.update( test_data )
+        error             = (out - test_targets).T
+        MSE               = np.mean( np.power(error,2) )
+        
+        return MSE
+    #end
     
     def save_to_file(self, filename = "network0.pkl" ):
         import cPickle, os, re
