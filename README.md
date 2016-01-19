@@ -18,28 +18,26 @@ To train the network on a custom dataset, you will have to alter the dataset spe
 
 ```Python
 # training set  Instance( [inputs], [targets] )
-trainingset          = [ Instance( [0,0], [0] ), Instance( [0,1], [1] ), Instance( [1,0], [1] ), Instance( [1,1], [0] ) ]
+trainingset = [ Instance( [0,0], [0] ), Instance( [0,1], [1] ), Instance( [1,0], [1] ), Instance( [1,1], [0] ) ]
 
-settings = {
+settings    = {
     # Required settings
-    "n_inputs"              : 2,        # Number of network input signals
-    "n_outputs"             : 1,        # Number of desired outputs from the network
-    "n_hidden_layers"       : 1,        # Number of nodes in each hidden layer
-    "n_hiddens"             : 2,        # Number of hidden layers in the network
-    "activation_functions"  : [ tanh_function, sigmoid_function ], # specify activation functions per layer eg: [ hidden_layer, output_layer ]
+    "n_inputs"              : 13,        # Number of network input signals
+    "layers"                : [ (3, tanh_function), (3, sigmoid_function) ],
+                                        # [ (number_of_neurons, activation_function) ]
+                                        # The last pair in you list describes the number of output signals
     
     # Optional settings
     "weights_low"           : -0.1,     # Lower bound on initial weight range
     "weights_high"          : 0.1,      # Upper bound on initial weight range
     "save_trained_network"  : False,    # Whether to write the trained weights to disk
     
-    "input_layer_dropout"   : 0.0,      # dropout fraction of the input layer
-    "hidden_layer_dropout"  : 0.1,      # dropout fraction in all hidden layers
-
+    "input_layer_dropout"   : 0.2,      # dropout fraction of the input layer
+    "hidden_layer_dropout"  : 0.5,      # dropout fraction in all hidden layers
 }
 
 # initialize your neural network
-network              = NeuralNet( settings )
+network = NeuralNet( settings )
 
 # save the trained network
 network.save_to_file( "trained_configuration.pkl" )
@@ -47,12 +45,13 @@ network.save_to_file( "trained_configuration.pkl" )
 # load a stored network configuration
 # network = NeuralNet.load_from_file( "trained_configuration.pkl" )
 
-# start training
+# start training on test set one
 network.backpropagation( 
-                trainingset,           # specify the training set
-                ERROR_LIMIT     = 1e-6, # define an acceptable error limit 
-                learning_rate   = 0.03, # learning rate
-                momentum_factor = 0.95  # momentum
+                training_wine,           # specify the training set
+                ERROR_LIMIT     = 1e-3,  # define an acceptable error limit 
+                learning_rate   = 0.03,  # learning rate
+                momentum_factor = 0.45,   # momentum
+                #max_iterations  = 100,  # continues until the error limit is reach if this argument is skipped
             )
 ```
 
