@@ -4,8 +4,7 @@ try:
     # PYPY hasn't got scipy
     from scipy.special import expit
 except:
-    import math
-    expit = lambda x: 1 / (1 + np.exp(-x))
+    expit = lambda x: 1.0 / (1 + np.exp(-x))
 
 
 def sigmoid_function( signal, derivative=False ):
