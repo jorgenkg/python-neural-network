@@ -1,15 +1,7 @@
 from tools import dropout, add_bias, confirm
+import numpy as np
 import collections
-import itertools
-import random
-import math
 
-try: 
-    import numpypy as np
-except:
-    import numpy as np
-   
-    
 default_settings = {
     # Optional settings
     "weights_low"           : -0.1,     # Lower bound on initial weight range
@@ -51,11 +43,7 @@ class NeuralNet:
     
     def generate_weights(self, low = -0.1, high = 0.1):
         # Generate new random weights for all the connections in the network
-        if not False:
-            # Support NumPy
-            return [random.uniform(low,high) for _ in xrange(self.n_weights)]
-        else:
-            return np.random.uniform(low, high, size=(1,self.n_weights)).tolist()[0]
+        return np.random.uniform(low, high, size=(self.n_weights,))
     #end
     
     
@@ -98,7 +86,6 @@ class NeuralNet:
         training_targets = np.array( [instance.targets  for instance in trainingset ] )
         
         MSE              = ( ) # inf
-        neterror         = None
         momentum         = collections.defaultdict( int )
         
         
@@ -171,6 +158,7 @@ class NeuralNet:
             
             if trace: 
                 outputs.append( output )
+                # Calculate the derivative, used during weight update
                 derivatives.append( self.activation_functions[i]( signal, derivative = True ).T )
         
         if trace: 
