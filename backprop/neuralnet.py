@@ -95,13 +95,13 @@ class NeuralNet:
                 
                 # perform dropout
                 dropped = dropout( 
-                            add_bias(input_signals[i]), 
+                            input_signals[i], 
                             # dropout probability
                             self.hidden_layer_dropout if i else self.input_layer_dropout
                         )
                 
                 # calculate the weight change
-                dW = -learning_rate * np.dot( delta, dropped ).T + momentum_factor * momentum[i]
+                dW = -learning_rate * np.dot( delta, add_bias(dropped) ).T + momentum_factor * momentum[i]
                 
                 if i!= 0:
                     """Do not calculate the delta unnecessarily."""
@@ -148,7 +148,7 @@ class NeuralNet:
         
         for i, weight_layer in enumerate(self.weights):
             # Loop over the network layers and calculate the output
-            signal = np.dot( add_bias(output), weight_layer )
+            signal = np.dot( output, weight_layer[1:,:] ) + weight_layer[0:1,:] # implicit bias
             output = self.layers[i][1]( signal )
             
             if trace: 
@@ -162,20 +162,7 @@ class NeuralNet:
         return output
     #end
     
-    def test(self, testset, DEBUG = False ):
-        if DEBUG:
-            for instance in testset:
-                out = self.update( np.array([instance.features]) )
-                error = out - instance.targets
-                MSE = np.mean( np.power(error,2) )
-            
-                print "Output: {output} \tTarget: {target}\tError: {error}".format( 
-                            output   = str(out), 
-                            target   = str(instance.targets),
-                            error    = str(MSE)
-                        )
-        #end debug
-        
+    def test(self, testset ):
         test_data    = np.array( [instance.features for instance in testset ] )
         test_targets = np.array( [instance.targets  for instance in testset ] )
         
