@@ -1,8 +1,8 @@
-import math
-import random
-import itertools
+from tools import dropout, add_bias, confirm
 import collections
-from tools import dropout, add_bias
+import itertools
+import random
+import math
 
 try: 
     import numpypy as np
@@ -17,6 +17,8 @@ default_settings = {
     
     "input_layer_dropout"   : 0.0,      # dropout fraction of the input layer
     "hidden_layer_dropout"  : 0.0,      # dropout fraction in all hidden layers
+    
+    "save_trained_network"  : False,
 }
 
 class NeuralNet:
@@ -40,6 +42,7 @@ class NeuralNet:
             self.n_weights = (self.n_inputs + 1) * self.n_hiddens +\
                              (self.n_hiddens**2  + self.n_hiddens) * (self.n_hidden_layers - 1) +\
                              (self.n_hiddens * self.n_outputs) + self.n_outputs
+            
         
         # Initialize the network with new randomized weights
         self.set_weights( self.generate_weights( self.weights_low, self.weights_high ) )
@@ -60,7 +63,7 @@ class NeuralNet:
         # This method will create a list of weight matrices. Each list element
         # corresponds to the connection between two layers.
         if self.n_hidden_layers == 0:
-            return [ np.array(weight_list).reshape(self.n_inputs+1,self.n_outputs) ]
+            return [ np.array(weight_list).reshape(self.n_inputs + 1, self.n_outputs) ]
         else:
             weight_layers = [ np.array(weight_list[:(self.n_inputs+1)*self.n_hiddens]).reshape(self.n_inputs+1,self.n_hiddens) ]
             weight_layers += [ np.array(weight_list[(self.n_inputs+1)*self.n_hiddens+(i*(self.n_hiddens**2+self.n_hiddens)):(self.n_inputs+1)*self.n_hiddens+((i+1)*(self.n_hiddens**2+self.n_hiddens))]).reshape(self.n_hiddens+1,self.n_hiddens) for i in xrange(self.n_hidden_layers-1) ]
@@ -82,7 +85,7 @@ class NeuralNet:
         return [w for l in self.weights for w in l.flat]
     #end
     
-    def backpropagation(self, trainingset, ERROR_LIMIT = 1e-3, learning_rate = 0.3, momentum_factor = 0.9  ):
+    def backpropagation(self, trainingset, ERROR_LIMIT = 1e-3, learning_rate = 0.03, momentum_factor = 0.9  ):
         
         assert trainingset[0].features.shape[0] == self.n_inputs, \
                 "ERROR: input size varies from the defined input setting"
@@ -92,7 +95,7 @@ class NeuralNet:
         
         
         training_data    = np.array( [instance.features for instance in trainingset ] )
-        training_targets = np.array( [instance.targets for instance in trainingset ] )
+        training_targets = np.array( [instance.targets  for instance in trainingset ] )
         
         MSE              = ( ) # inf
         neterror         = None
@@ -103,44 +106,41 @@ class NeuralNet:
         while MSE > ERROR_LIMIT:
             epoch += 1
             
-            input_layers      = self.update( training_data, trace=True )
-            out               = input_layers[-1]
+            input_signals, derivatives = self.update( training_data, trace=True )
             
-            error             = out - training_targets
-            delta             = error
+            out               = input_signals[-1]
+            error             = (out - training_targets).T
+            delta             = error * derivatives[-1]
             MSE               = np.mean( np.power(error,2) )
-        
-        
-            loop  = itertools.izip(
-                            xrange(len(self.weights)-1, -1, -1),
-                            reversed(self.weights),
-                            reversed(input_layers[:-1]),
-                        )
-        
-            for i, weight_layer, input_signals in loop:
+            
+            
+            for i in xrange(len(self.weights)-1, -1, -1):
                 # Loop over the weight layers in reversed order to calculate the deltas
-            
-                if i == 0:
-                    dropped = dropout( add_bias(input_signals).T, self.input_layer_dropout  )
-                else:
-                    dropped = dropout( add_bias(input_signals).T, self.hidden_layer_dropout )
-            
-                # Calculate weight change
-                dW = learning_rate * np.dot( dropped, delta ) + momentum_factor * momentum[i]
-            
+                
+                # perform dropout
+                dropped = dropout( 
+                            add_bias(input_signals[i]), 
+                            # dropout probability
+                            self.hidden_layer_dropout if i else self.input_layer_dropout
+                        )
+                
+                # calculate the weight change
+                dW = -learning_rate * np.dot( delta, dropped ).T + momentum_factor * momentum[i]
+                
                 if i!= 0:
                     """Do not calculate the delta unnecessarily."""
-                    # Skipping the bias weight during calculation.
-                    weight_delta = np.dot( delta, weight_layer[1:,:].T )
+                    # Skip the bias weight
+                    weight_delta = np.dot( self.weights[ i ][1:,:], delta )
         
                     # Calculate the delta for the subsequent layer
-                    delta = np.multiply(  weight_delta, self.activation_functions[i-1]( input_signals, derivative=True) )
-            
+                    delta = weight_delta * derivatives[i-1]
+                
                 # Store the momentum
                 momentum[i] = dW
-            
+                                    
                 # Update the weights
-                self.weights[ i ] -= dW
+                self.weights[ i ] += dW
+            #end weight adjustment loop
             
             if epoch%1000==0:
                 # Show the current training status
@@ -148,6 +148,9 @@ class NeuralNet:
         
         print "* Converged to error bound (%.4g) with MSE = %.4g." % ( ERROR_LIMIT, MSE )
         print "* Trained for %d epochs." % epoch
+        
+        if self.save_trained_network and confirm( promt = "Do you wish to store the trained network?" ):
+            self.save_to_file()
     # end backprop
     
     
@@ -155,31 +158,39 @@ class NeuralNet:
         # This is a forward operation in the network. This is how we 
         # calculate the network output from a set of input signals.
         
-        output = input_values
-        if trace: tracelist = [ output ]
+        output          = input_values
+        
+        if trace: 
+            derivatives = [ ]        # collection of the derivatives of the act functions
+            outputs     = [ output ] # passed through act. func.
         
         for i, weight_layer in enumerate(self.weights):
             # Loop over the network layers and calculate the output
-            if i == 0:
-                output = np.dot( output, weight_layer[1:,:] ) + weight_layer[0:1,:] # implicit bias
-            else:
-                output = np.dot( output, weight_layer[1:,:] ) + weight_layer[0:1,:] # implicit bias
+            signal = np.dot( add_bias(output), weight_layer )
+            output = self.activation_functions[i]( signal )
             
-            output = self.activation_functions[i]( output )
-            if trace: tracelist.append( output )
+            if trace: 
+                outputs.append( output )
+                derivatives.append( self.activation_functions[i]( signal, derivative = True ).T )
         
-        if trace: return tracelist
+        if trace: 
+            return outputs, derivatives
         
         return output
     #end
     
     
-    def save_to_file(self, filename = "network.pkl" ):
-        import cPickle
+    def save_to_file(self, filename = "network0.pkl" ):
+        import cPickle, os, re
         """
         This save method pickles the parameters of the current network into a 
         binary file for persistant storage.
         """
+        
+        if filename == "network0.pkl":
+            while os.path.exists( os.path.join(os.getcwd(), filename )):
+                filename = re.sub('\d(?!\d)', lambda x: str(int(x.group(0)) + 1), filename)
+        
         with open( filename , 'wb') as file:
             store_dict = {
                 "n_inputs"             : self.n_inputs,

@@ -39,10 +39,9 @@ network = NeuralNet( settings )
 network.backpropagation( 
                 training_one,           # specify the training set
                 ERROR_LIMIT     = 1e-3, # define an acceptable error limit 
-                learning_rate   = 0.03, # learning rate
-                momentum_factor = 0.9  # momentum
+                learning_rate   = 0.3, # learning rate
+                momentum_factor = 0.95  # momentum
             )
-
 
 # Test the network by looping through the specified dataset and print the results.
 for instance in training_one:
@@ -51,8 +50,3 @@ for instance in training_one:
                 output   = str(network.update( np.array([instance.features]) )), 
                 target   = str(instance.targets)
             )
-
-
-if settings.get("save_trained_network", False):
-    # save the trained network
-    network.save_to_file( "trained_configuration.pkl" )
