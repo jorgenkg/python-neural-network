@@ -1,6 +1,7 @@
 from tools import dropout, add_bias, confirm
 import numpy as np
 import collections
+import math
 
 default_settings = {
     # Optional settings
@@ -136,6 +137,251 @@ class NeuralNet:
             self.save_to_file()
     # end backprop
     
+    def resilient_backpropagation(self, trainingset, ERROR_LIMIT=1e-3, max_iterations = (), weight_step_max = 50., weight_step_min = 0., start_step = 0.5, learn_max = 1.2, learn_min = 0.5 ):
+        # Implemented according to iRprop+ 
+        # http://sci2s.ugr.es/keel/pdf/algorithm/articulo/2003-Neuro-Igel-IRprop+.pdf
+        assert self.input_layer_dropout == 0 and self.hidden_layer_dropout == 0, \
+                "ERROR: dropout should not be used with resilient backpropagation"
+        
+        assert trainingset[0].features.shape[0] == self.n_inputs, \
+                "ERROR: input size varies from the defined input setting"
+        
+        assert trainingset[0].targets.shape[0]  == self.layers[-1][0], \
+                "ERROR: output size varies from the defined output setting"
+        
+        training_data              = np.array( [instance.features for instance in trainingset ] )
+        training_targets           = np.array( [instance.targets  for instance in trainingset ] )
+        
+        # Data structure to store the previous derivative
+        last_dEdW                  = [ 1 ] * len( self.weights )
+        
+        # Storing the current / previous weight step size
+        weight_step                = [ np.full( weight_layer.shape, start_step ) for weight_layer in self.weights ]
+        
+        # Storing the current / previous weight update
+        dW                         = [  np.ones(shape=weight_layer.shape) for weight_layer in self.weights ]
+        
+        
+        input_signals, derivatives = self.update( training_data, trace=True )
+        out                        = input_signals[-1]
+        error                      = (out - training_targets).T
+        delta                      = error * derivatives[-1]
+        MSE                        = np.mean( np.power(error,2) )
+        
+        layer_indexes              = range( len(self.layers) )[::-1] # reversed
+        prev_MSE                   = ( )                             # inf
+        epoch                      = 0
+        
+        while MSE > ERROR_LIMIT and epoch < max_iterations:
+            epoch       += 1
+            
+            for i in layer_indexes:
+                # Loop over the weight layers in reversed order to calculate the deltas
+                       
+                # Calculate the delta with respect to the weights
+                dEdW = np.dot( delta, add_bias(input_signals[i]) ).T
+                
+                if i != 0:
+                    """Do not calculate the delta unnecessarily."""
+                    # Skip the bias weight
+                    weight_delta = np.dot( self.weights[ i ][1:,:], delta )
+        
+                    # Calculate the delta for the subsequent layer
+                    delta = weight_delta * derivatives[i-1]
+                
+                
+                # Calculate sign changes and note where they have changed
+                diffs            = np.multiply( dEdW, last_dEdW[i] )
+                pos_indexes      = np.where( diffs > 0 )
+                neg_indexes      = np.where( diffs < 0 )
+                zero_indexes     = np.where( diffs == 0 )
+                
+                
+                # positive
+                if np.any(pos_indexes):
+                    # Calculate the weight step size
+                    weight_step[i][pos_indexes] = np.minimum( weight_step[i][pos_indexes] * learn_max, weight_step_max )
+                    
+                    # Calculate the weight step direction
+                    dW[i][pos_indexes] = np.multiply( -np.sign( dEdW[pos_indexes] ), weight_step[i][pos_indexes] )
+                    
+                    # Apply the weight deltas
+                    self.weights[i][ pos_indexes ] += dW[i][pos_indexes]
+                
+                # negative
+                if np.any(neg_indexes):
+                    weight_step[i][neg_indexes] = np.maximum( weight_step[i][neg_indexes] * learn_min, weight_step_min )
+                    
+                    if MSE > prev_MSE:
+                        # iRprop+ version of resilient backpropagation
+                        self.weights[i][ neg_indexes ] -= dW[i][neg_indexes] # backtrack
+                    
+                    dEdW[ neg_indexes ] = 0
+                
+                # zeros
+                if np.any(zero_indexes):
+                    dW[i][zero_indexes] = np.multiply( -np.sign( dEdW[zero_indexes] ), weight_step[i][zero_indexes] )
+                    self.weights[i][ zero_indexes ] += dW[i][zero_indexes]
+                
+                # Store the previous weight step
+                last_dEdW[i] = dEdW
+            #end weight adjustment loop
+            
+            prev_MSE                   = MSE
+            
+            input_signals, derivatives = self.update( training_data, trace=True )
+            out                        = input_signals[-1]
+            error                      = (out - training_targets).T
+            delta                      = error * derivatives[-1]
+            MSE                        = np.mean( np.power(error,2) )
+            
+            if epoch%1000==0: print "* current network error (MSE):", MSE
+    
+        print "* Converged to error bound (%.3g) with MSE = %.3g." % ( ERROR_LIMIT, MSE )
+        print "* Trained for %d epochs." % epoch
+        
+        if self.save_trained_network and confirm( promt = "Do you wish to store the trained network?" ):
+            self.save_to_file()
+    # end backprop
+    
+    def error(self, weight_vector, training_data, training_targets ):
+        self.weights               = self.unpack( np.array(weight_vector) )
+        out                        = self.update( training_data )
+        error                      = (out - training_targets).T
+        return np.mean( np.power(error,2) )
+    #end
+    
+    def gradient(self, weight_vector, training_data, training_targets ):
+        layer_indexes              = range( len(self.layers) )[::-1]    # reversed
+        self.weights               = self.unpack( np.array(weight_vector) )
+        input_signals, derivatives = self.update( training_data, trace=True )
+        
+        out                        = input_signals[-1]
+        error                      = (out - training_targets).T
+        delta                      = error * derivatives[-1]
+        
+        layers = []
+        for i in layer_indexes:
+            # Loop over the weight layers in reversed order to calculate the deltas
+            
+            # calculate the weight change
+            dW = layers.append(np.dot( delta, add_bias(input_signals[i]) ).T.flat)
+            
+            if i!= 0:
+                """Do not calculate the delta unnecessarily."""
+                # Skip the bias weight
+                weight_delta = np.dot( self.weights[ i ][1:,:], delta )
+    
+                # Calculate the delta for the subsequent layer
+                delta = weight_delta * derivatives[i-1]
+        #end weight adjustment loop
+        
+        return np.hstack( reversed(layers) )
+    # end gradient
+    
+    def scg(self, trainingset, ERROR_LIMIT = 1e-6, max_iterations = () ):
+        # Implemented according to the paper by Martin F. Møller
+        # http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.38.3391
+        
+        assert self.input_layer_dropout == 0 and self.hidden_layer_dropout == 0, \
+                "ERROR: dropout should not be used with scaled conjugated gradients training"
+                
+        assert trainingset[0].features.shape[0] == self.n_inputs, \
+                "ERROR: input size varies from the defined input setting"
+        
+        assert trainingset[0].targets.shape[0]  == self.layers[-1][0], \
+                "ERROR: output size varies from the defined output setting"
+        
+        
+        training_data       = np.array( [instance.features for instance in trainingset ] )
+        training_targets    = np.array( [instance.targets  for instance in trainingset ] )
+        
+    
+        ## Variables
+        sigma0              = 1.e-6
+        lamb                = 1.e-6
+        lamb_               = 0
+    
+        vector              = self.get_weights() # The (weight) vector we will use SCG to optimalize
+        N                   = len(vector)
+        grad_new            = -self.gradient( vector, training_data, training_targets )
+        r_new               = grad_new
+        # end
+    
+        success             = True
+        k                   = 0
+        while k < max_iterations:
+            k               += 1
+            r               = np.copy( r_new     )
+            grad            = np.copy( grad_new  )
+            mu              = np.dot(  grad,grad )
+        
+            if success:
+                success     = False
+                sigma       = sigma0 / math.sqrt(mu)
+                s           = (self.gradient(vector+sigma*grad, training_data, training_targets)-self.gradient(vector,training_data, training_targets))/sigma
+                delta       = np.dot( grad.T, s )
+            #end
+        
+            # scale s
+            zetta           = lamb-lamb_
+            s               += zetta*grad
+            delta           += zetta*mu
+        
+            if delta < 0:
+                s           += (lamb - 2*delta/mu)*grad
+                lamb_       = 2*(lamb - delta/mu)
+                delta       -= lamb*mu
+                delta       *= -1
+                lamb        = lamb_
+            #end
+        
+            phi             = np.dot( grad.T,r )
+            alpha           = phi/delta
+        
+            vector_new      = vector+alpha*grad
+            f_old, f_new    = self.error(vector,training_data, training_targets), self.error(vector_new,training_data, training_targets)
+        
+            comparison      = 2 * delta * (f_old - f_new)/np.power( phi, 2 )
+            
+            if comparison >= 0:
+                if f_new < ERROR_LIMIT: 
+                    break # done!
+            
+                vector      = vector_new
+                f_old       = f_new
+                r_new       = -self.gradient( vector, training_data, training_targets )
+            
+                success     = True
+                lamb_       = 0
+            
+                if k % N == 0:
+                    grad_new = r_new
+                else:
+                    beta    = (np.dot( r_new, r_new ) - np.dot( r_new, r ))/phi
+                    grad_new = r_new + beta * grad
+            
+                if comparison > 0.75:
+                    lamb    = 0.5 * lamb
+            else:
+                lamb_       = lamb
+            # end 
+        
+            if comparison < 0.25: 
+                lamb        = 4 * lamb
+        
+            if k%1000==0: print "* current network error (MSE):", f_new
+        #end
+        
+        self.weights = self.unpack( np.array(vector_new) )
+        
+        print "* Converged to error bound (%.3g) with MSE = %.3g." % ( ERROR_LIMIT, f_new )
+        print "* Trained for %d epochs." % k
+        
+        
+        if self.save_trained_network and confirm( promt = "Do you wish to store the trained network?" ):
+            self.save_to_file()
+    #end scg
     
     def update(self, input_values, trace=False ):
         # This is a forward operation in the network. This is how we 
