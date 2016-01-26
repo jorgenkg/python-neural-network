@@ -265,7 +265,7 @@ class NeuralNet:
             # Loop over the weight layers in reversed order to calculate the deltas
             
             # calculate the weight change
-            dW = layers.append(np.dot( delta, add_bias(input_signals[i]) ).T.flat)
+            layers.append(np.dot( delta, add_bias(input_signals[i]) ).T.flat)
             
             if i!= 0:
                 """Do not calculate the delta unnecessarily."""
@@ -280,7 +280,7 @@ class NeuralNet:
     # end gradient
     
     def scg(self, trainingset, ERROR_LIMIT = 1e-6, max_iterations = () ):
-        # Implemented according to the paper by Martin F. Møller
+        # Implemented according to the paper by Martin F. Moller
         # http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.38.3391
         
         assert self.input_layer_dropout == 0 and self.hidden_layer_dropout == 0, \
