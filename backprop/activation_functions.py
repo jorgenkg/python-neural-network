@@ -94,7 +94,7 @@ def tanh_function( signal, derivative=False ):
 def linear_function( signal, derivative=False ):
     if derivative:
         # Return the partial derivation of the activation function
-        return 1
+        return np.ones( signal.shape )
     else:
         # Return the activation signal
         return signal
