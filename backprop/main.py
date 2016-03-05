@@ -1,6 +1,6 @@
 from activation_functions import sigmoid_function, tanh_function, linear_function,\
                                  LReLU_function, ReLU_function, elliot_function, symmetric_elliot_function
-from cost_functions import sum_squared_error
+from cost_functions import sum_squared_error, cross_entropy_cost, exponential_cost
 from neuralnet import NeuralNet
 from tools import Instance
 import numpy as np
@@ -11,7 +11,7 @@ training_one    = [ Instance( [0,0], [0] ), Instance( [0,1], [1] ), Instance( [1
 
 settings = {
     # Required settings
-    "cost_function"         : sum_squared_error,
+    "cost_function"         : exponential_cost,
     "n_inputs"              : 2,       # Number of network input signals
     "layers"                : [ (2, tanh_function), (1, sigmoid_function) ],
                                         # [ (number_of_neurons, activation_function) ]
