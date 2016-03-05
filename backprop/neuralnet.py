@@ -78,17 +78,16 @@ class NeuralNet:
                                 
         layer_indexes              = range( len(self.layers) )[::-1]    # reversed
         momentum                   = collections.defaultdict( int )
-        MSE                        = ( ) # inf
         epoch                      = 0
         
         input_signals, derivatives = self.update( training_data, trace=True )
         
         out                        = input_signals[-1]
-        error                      = (out - training_targets).T
-        delta                      = error * derivatives[-1]
-        MSE                        = np.mean( np.power(error,2) )
+        cost_derivative            = self.cost_function(out, training_targets, derivative=True).T
+        delta                      = cost_derivative * derivatives[-1]
+        error                      = self.cost_function(out, training_targets )
         
-        while MSE > ERROR_LIMIT and epoch < max_iterations:
+        while error > ERROR_LIMIT and epoch < max_iterations:
             epoch += 1
             
             for i in layer_indexes:
@@ -98,13 +97,13 @@ class NeuralNet:
                 dropped = dropout( 
                             input_signals[i], 
                             # dropout probability
-                            self.hidden_layer_dropout if i else self.input_layer_dropout
+                            self.hidden_layer_dropout if i > 0 else self.input_layer_dropout
                         )
                 
                 # calculate the weight change
                 dW = -learning_rate * np.dot( delta, add_bias(dropped) ).T + momentum_factor * momentum[i]
                 
-                if i!= 0:
+                if i != 0:
                     """Do not calculate the delta unnecessarily."""
                     # Skip the bias weight
                     weight_delta = np.dot( self.weights[ i ][1:,:], delta )
@@ -121,16 +120,16 @@ class NeuralNet:
             
             input_signals, derivatives = self.update( training_data, trace=True )
             out                        = input_signals[-1]
-            error                      = (out - training_targets).T
-            delta                      = error * derivatives[-1]
-            MSE                        = np.mean( np.power(error,2) )
+            cost_derivative            = self.cost_function(out, training_targets, derivative=True).T
+            delta                      = cost_derivative * derivatives[-1]
+            error                      = self.cost_function(out, training_targets )
             
             
             if epoch%1000==0:
                 # Show the current training status
-                print "* current network error (MSE):", MSE
+                print "* current network error:", error
         
-        print "* Converged to error bound (%.4g) with MSE = %.4g." % ( ERROR_LIMIT, MSE )
+        print "* Converged to error bound (%.4g) with error = %.4g." % ( ERROR_LIMIT, error )
         print "* Trained for %d epochs." % epoch
         
         if self.save_trained_network and confirm( promt = "Do you wish to store the trained network?" ):
@@ -278,6 +277,40 @@ class NeuralNet:
         
         return np.hstack( reversed(layers) )
     # end gradient
+    
+    def scipyoptimize(self, trainingset, ERROR_LIMIT = 1e-6, max_iterations = ()  ):
+        from scipy.optimize import minimize
+        
+        training_data       = np.array( [instance.features for instance in trainingset ] )
+        training_targets    = np.array( [instance.targets  for instance in trainingset ] )
+        options             = {}
+        
+        if max_iterations < ():
+            options["maxiter"] = max_iterations
+            
+        results = minimize( 
+            self.error, self.get_weights(), 
+            args = (training_data, training_targets), 
+            method = "Newton-CG",
+            jac = self.gradient,
+            options = options 
+        )
+        
+        optimized_weights = results.x
+        
+        self.weights = self.unpack( np.array(optimized_weights) )
+        
+        
+        if not results.success:
+            print "* ERROR: did not converge"
+        
+        print "* MSE = %.3g." % results.fun
+        print "* Trained for %d epochs." % results.nfev
+        
+        
+        if self.save_trained_network and confirm( promt = "Do you wish to store the trained network?" ):
+            self.save_to_file()
+    #end
     
     def scg(self, trainingset, ERROR_LIMIT = 1e-6, max_iterations = () ):
         # Implemented according to the paper by Martin F. Moller
