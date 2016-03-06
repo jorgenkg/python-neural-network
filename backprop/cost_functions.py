@@ -1,5 +1,5 @@
 import numpy as np
-
+import math
 
 def sum_squared_error( outputs, targets, derivative=False ):
     if derivative:
@@ -8,8 +8,23 @@ def sum_squared_error( outputs, targets, derivative=False ):
         return 0.5 * np.sum( np.power(outputs - targets,2) )
 #end cost function
 
+def hellinger_distance( outputs, targets, derivative=False ):
+    """
+    The output signals should be in the range [0, 1]
+    """
+    root_difference = np.sqrt( outputs ) - np.sqrt( targets )
+    
+    if derivative:
+        return root_difference/( np.sqrt(2) * np.sqrt( outputs ))
+    else:
+        return np.sum( np.power(root_difference, 2 )) / math.sqrt( 2 )
+#end cost function
+
 
 def cross_entropy_cost( outputs, targets, derivative=False ):
+    """
+    The output signals should be in the range [0, 1]
+    """
     if derivative:
         return (outputs - targets) / (outputs * (1 - outputs)) 
     else:
