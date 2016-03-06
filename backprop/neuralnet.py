@@ -127,10 +127,11 @@ class NeuralNet:
             
             if epoch%1000==0:
                 # Show the current training status
-                print "* current network error:", error
+                print "[training] Current error:", error
         
-        print "* Converged to error bound (%.4g) with error = %.4g." % ( ERROR_LIMIT, error )
-        print "* Trained for %d epochs." % epoch
+        print "[training] Finished:"
+        print "[training]   Converged to error bound (%.4g) with error %.4g." % ( ERROR_LIMIT, error )
+        print "[training]   Trained for %d epochs." % epoch
         
         if self.save_trained_network and confirm( promt = "Do you wish to store the trained network?" ):
             self.save_to_file()
@@ -163,15 +164,15 @@ class NeuralNet:
         
         input_signals, derivatives = self.update( training_data, trace=True )
         out                        = input_signals[-1]
-        error                      = (out - training_targets).T
-        delta                      = error * derivatives[-1]
-        MSE                        = np.mean( np.power(error,2) )
+        cost_derivative            = self.cost_function(out, training_targets, derivative=True).T
+        delta                      = cost_derivative * derivatives[-1]
+        error                      = self.cost_function(out, training_targets )
         
         layer_indexes              = range( len(self.layers) )[::-1] # reversed
-        prev_MSE                   = ( )                             # inf
+        prev_error                   = ( )                             # inf
         epoch                      = 0
         
-        while MSE > ERROR_LIMIT and epoch < max_iterations:
+        while error > ERROR_LIMIT and epoch < max_iterations:
             epoch       += 1
             
             for i in layer_indexes:
@@ -211,7 +212,7 @@ class NeuralNet:
                 if np.any(neg_indexes):
                     weight_step[i][neg_indexes] = np.maximum( weight_step[i][neg_indexes] * learn_min, weight_step_min )
                     
-                    if MSE > prev_MSE:
+                    if error > prev_error:
                         # iRprop+ version of resilient backpropagation
                         self.weights[i][ neg_indexes ] -= dW[i][neg_indexes] # backtrack
                     
@@ -226,18 +227,21 @@ class NeuralNet:
                 last_dEdW[i] = dEdW
             #end weight adjustment loop
             
-            prev_MSE                   = MSE
+            error                      = error
             
             input_signals, derivatives = self.update( training_data, trace=True )
             out                        = input_signals[-1]
-            error                      = (out - training_targets).T
-            delta                      = error * derivatives[-1]
-            MSE                        = np.mean( np.power(error,2) )
+            cost_derivative            = self.cost_function(out, training_targets, derivative=True).T
+            delta                      = cost_derivative * derivatives[-1]
+            error                      = self.cost_function(out, training_targets )
             
-            if epoch%1000==0: print "* current network error (MSE):", MSE
+            if epoch%1000==0:
+                # Show the current training status
+                print "[training] Current error:", error
     
-        print "* Converged to error bound (%.3g) with MSE = %.3g." % ( ERROR_LIMIT, MSE )
-        print "* Trained for %d epochs." % epoch
+        print "[training] Finished:"
+        print "[training]   Converged to error bound (%.4g) with error %.4g." % ( ERROR_LIMIT, error )
+        print "[training]   Trained for %d epochs." % epoch
         
         if self.save_trained_network and confirm( promt = "Do you wish to store the trained network?" ):
             self.save_to_file()
@@ -246,8 +250,8 @@ class NeuralNet:
     def error(self, weight_vector, training_data, training_targets ):
         self.weights               = self.unpack( np.array(weight_vector) )
         out                        = self.update( training_data )
-        error                      = (out - training_targets).T
-        return np.mean( np.power(error,2) )
+        
+        return self.cost_function(out, training_targets )
     #end
     
     def gradient(self, weight_vector, training_data, training_targets ):
@@ -256,15 +260,22 @@ class NeuralNet:
         input_signals, derivatives = self.update( training_data, trace=True )
         
         out                        = input_signals[-1]
-        error                      = (out - training_targets).T
-        delta                      = error * derivatives[-1]
+        cost_derivative            = self.cost_function(out, training_targets, derivative=True).T
+        delta                      = cost_derivative * derivatives[-1]
+        error                      = self.cost_function(out, training_targets )
         
         layers = []
         for i in layer_indexes:
             # Loop over the weight layers in reversed order to calculate the deltas
             
             # calculate the weight change
-            layers.append(np.dot( delta, add_bias(input_signals[i]) ).T.flat)
+            dropped = dropout( 
+                        input_signals[i], 
+                        # dropout probability
+                        self.hidden_layer_dropout if i > 0 else self.input_layer_dropout
+                    )
+                    
+            layers.append(np.dot( delta, add_bias(dropped) ).T.flat)
             
             if i!= 0:
                 """Do not calculate the delta unnecessarily."""
@@ -278,7 +289,7 @@ class NeuralNet:
         return np.hstack( reversed(layers) )
     # end gradient
     
-    def scipyoptimize(self, trainingset, ERROR_LIMIT = 1e-6, max_iterations = ()  ):
+    def scipyoptimize(self, trainingset, method = "Newton-CG", ERROR_LIMIT = 1e-6, max_iterations = ()  ):
         from scipy.optimize import minimize
         
         training_data       = np.array( [instance.features for instance in trainingset ] )
@@ -291,7 +302,7 @@ class NeuralNet:
         results = minimize( 
             self.error, self.get_weights(), 
             args = (training_data, training_targets), 
-            method = "Newton-CG",
+            method = method,
             jac = self.gradient,
             options = options 
         )
@@ -304,7 +315,7 @@ class NeuralNet:
         if not results.success:
             print "* ERROR: did not converge"
         
-        print "* MSE = %.3g." % results.fun
+        print "* Error = %.3g." % results.fun
         print "* Trained for %d epochs." % results.nfev
         
         
@@ -403,12 +414,12 @@ class NeuralNet:
             if comparison < 0.25: 
                 lamb        = 4 * lamb
         
-            if k%1000==0: print "* current network error (MSE):", f_new
+            if k%1000==0: print "* current network error:", f_new
         #end
         
         self.weights = self.unpack( np.array(vector_new) )
         
-        print "* Converged to error bound (%.3g) with MSE = %.3g." % ( ERROR_LIMIT, f_new )
+        print "* Converged to error bound (%.3g) with %.3g." % ( ERROR_LIMIT, f_new )
         print "* Trained for %d epochs." % k
         
         
@@ -441,15 +452,19 @@ class NeuralNet:
         return output
     #end
     
-    def test(self, testset ):
+    def print_test(self, testset ):
         test_data    = np.array( [instance.features for instance in testset ] )
         test_targets = np.array( [instance.targets  for instance in testset ] )
         
-        out               = self.update( test_data )
-        error             = (out - test_targets).T
-        MSE               = np.mean( np.power(error,2) )
+        input_signals, derivatives = self.update( test_data, trace=True )
+        out                        = input_signals[-1]
+        error                      = self.cost_function(out, test_targets )
         
-        return MSE
+        print "[testing] Network error: %.4g" % error
+        print "[testing] Network results:"
+        print "[testing]   input\tresult\ttarget"
+        for entry, result, target in zip(test_data, out, test_targets):
+            print "[testing]   %s\t%s\t%s" % tuple(map(str, [entry, result, target]))
     #end
     
     def save_to_file(self, filename = "network0.pkl" ):
@@ -471,7 +486,8 @@ class NeuralNet:
                 "n_hidden_layers"      : self.n_hidden_layers,
                 "activation_functions" : self.activation_functions,
                 "n_weights"            : self.n_weights,
-                "weights"              : self.weights
+                "weights"              : self.weights,
+                "cost_function"        : self.cost_function
 
             }
             cPickle.dump( store_dict, file, 2 )
@@ -495,6 +511,7 @@ class NeuralNet:
             network.n_weights            = store_dict["n_weights"]           
             network.weights              = store_dict["weights"]             
             network.activation_functions = store_dict["activation_functions"]
+            network.cost_function        = store_dict["cost_function"]
         
         return network
     #end
