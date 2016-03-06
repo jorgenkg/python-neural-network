@@ -1,13 +1,13 @@
 from activation_functions import sigmoid_function, tanh_function, linear_function,\
                                  LReLU_function, ReLU_function, elliot_function, symmetric_elliot_function
-from cost_functions import sum_squared_error, cross_entropy_cost, exponential_cost
+from cost_functions import sum_squared_error, cross_entropy_cost, exponential_cost, hellinger_distance
 from neuralnet import NeuralNet
 from tools import Instance
 import numpy as np
 
 
 # Training sets
-training_one    = [ Instance( [0,0], [0] ), Instance( [0,1], [1] ), Instance( [1,0], [1] ), Instance( [1,1], [1] ) ]
+training_one    = [ Instance( [0,0], [0] ), Instance( [0,1], [1] ), Instance( [1,0], [1] ), Instance( [1,1], [0] ) ]
 
 settings = {
     # Required settings
@@ -33,13 +33,7 @@ network = NeuralNet( settings )
 # load a stored network configuration
 # network = NeuralNet.load_from_file( "trained_configuration.pkl" )
 
-# Train the network using Scaled Conjugate Gradient
-#network.scipyoptimize(
-#                training_one, 
-#                ERROR_LIMIT = 1e-4
-#            )
-
-# Train the network using backpropagation
+## Train the network using backpropagation
 network.backpropagation( 
              training_one,          # specify the training set
              ERROR_LIMIT     = 1e-3, # define an acceptable error limit 
@@ -49,6 +43,19 @@ network.backpropagation(
              learning_rate   = 0.06, # learning rate
              momentum_factor = 0.9, # momentum
          )
+
+# Train the network using SciPy
+#network.scipyoptimize(
+#                training_one, 
+#                method = "Newton-CG",
+#                ERROR_LIMIT = 1e-4
+#            )
+
+## Train the network using Scaled Conjugate Gradient
+#network.scg(
+#                training_one, 
+#                ERROR_LIMIT = 1e-4
+#            )
 
 # Train the network using resilient backpropagation
 #network.resilient_backpropagation( 
@@ -64,4 +71,5 @@ network.backpropagation(
 #                learn_min = 0.5
 #            )
 
-print "Final MSE:", network.test( training_one )
+
+network.print_test( training_one )
