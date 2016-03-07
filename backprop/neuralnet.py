@@ -227,7 +227,7 @@ class NeuralNet:
                 last_dEdW[i] = dEdW
             #end weight adjustment loop
             
-            error                      = error
+            prev_error                      = error
             
             input_signals, derivatives = self.update( training_data, trace=True )
             out                        = input_signals[-1]
