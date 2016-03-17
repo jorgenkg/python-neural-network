@@ -28,16 +28,16 @@ def cross_entropy_cost( outputs, targets, derivative=False ):
     if derivative:
         return (outputs - targets) / (outputs * (1 - outputs)) 
     else:
-        return -np.sum(targets * np.log( outputs ) + (1 - targets) * np.log(1 - outputs))
+        return -np.mean(np.sum(targets * np.log( outputs ) + (1 - targets) * np.log(1 - outputs), axis=1))
 #end cost function
 
 
 def exponential_cost( outputs, targets, derivative=False, tau = 2.0 ):
-    core = np.sum( np.power(outputs - targets,2) ) / tau
-    cost = np.exp( core )
+    diff = outputs - targets
+    cost = tau * np.exp( np.sum( diff**2 ) / tau )
     
     if derivative:
-        return 2 / tau * (outputs - targets) * tau * cost
+        return 2/tau * diff * cost
     
-    return np.sum(cost) - 1
+    return np.sum(cost) - tau
 #end cost function
