@@ -3,7 +3,6 @@ from activation_functions import sigmoid_function, tanh_function, linear_functio
 from cost_functions import sum_squared_error, cross_entropy_cost, exponential_cost, hellinger_distance
 from neuralnet import NeuralNet
 from tools import Instance
-import numpy as np
 
 
 # Training sets
