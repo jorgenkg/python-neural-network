@@ -1,18 +1,18 @@
 from activation_functions import sigmoid_function, tanh_function, linear_function,\
-                                 LReLU_function, ReLU_function, elliot_function, symmetric_elliot_function
-from cost_functions import sum_squared_error, cross_entropy_cost, exponential_cost, hellinger_distance
+                                 LReLU_function, ReLU_function, elliot_function, symmetric_elliot_function, softmax_function
+from cost_functions import sum_squared_error, cross_entropy_cost, exponential_cost, hellinger_distance, softmax_cross_entropy_cost
 from neuralnet import NeuralNet
 from tools import Instance
 
 
 # Training sets
-training_one    = [ Instance( [0,0], [0] ), Instance( [0,1], [1] ), Instance( [1,0], [1] ), Instance( [1,1], [0] ) ]
+training_one    = [ Instance( [0,0], [0,1] ), Instance( [0,1], [1,0] ), Instance( [1,0], [1,0] ), Instance( [1,1], [0,1] ) ]
 
 settings = {
     # Required settings
-    "cost_function"         : exponential_cost,
+    "cost_function"         : softmax_cross_entropy_cost,
     "n_inputs"              : 2,       # Number of network input signals
-    "layers"                : [ (2, tanh_function), (1, sigmoid_function) ],
+    "layers"                : [ (2, tanh_function), (2, softmax_function) ],
                                         # [ (number_of_neurons, activation_function) ]
                                         # The last pair in you list describes the number of output signals
     
@@ -33,15 +33,15 @@ network = NeuralNet( settings )
 # network = NeuralNet.load_from_file( "trained_configuration.pkl" )
 
 ## Train the network using backpropagation
-network.backpropagation( 
-             training_one,          # specify the training set
-             ERROR_LIMIT     = 1e-3, # define an acceptable error limit 
-             #max_iterations  = 100, # continues until the error limit is reach if this argument is skipped
-
-             # optional parameters
-             learning_rate   = 0.06, # learning rate
-             momentum_factor = 0.9, # momentum
-         )
+#network.backpropagation( 
+#             training_one,          # specify the training set
+#             ERROR_LIMIT     = 1e-3, # define an acceptable error limit 
+#             #max_iterations  = 100, # continues until the error limit is reach if this argument is skipped
+#
+#             # optional parameters
+#             learning_rate   = 0.03, # learning rate
+#             momentum_factor = 0.9, # momentum
+#         )
 
 # Train the network using SciPy
 #network.scipyoptimize(
@@ -57,18 +57,18 @@ network.backpropagation(
 #            )
 
 # Train the network using resilient backpropagation
-#network.resilient_backpropagation( 
-#                training_one,          # specify the training set
-#                ERROR_LIMIT     = 1e-3, # define an acceptable error limit
-#                #max_iterations = (),   # continues until the error limit is reach if this argument is skipped
-#                
-#                # optional parameters
-#                weight_step_max = 50., 
-#                weight_step_min = 0., 
-#                start_step = 0.5, 
-#                learn_max = 1.2, 
-#                learn_min = 0.5
-#            )
+network.resilient_backpropagation( 
+                training_one,          # specify the training set
+                ERROR_LIMIT     = 1e-3, # define an acceptable error limit
+                #max_iterations = (),   # continues until the error limit is reach if this argument is skipped
+                
+                # optional parameters
+                weight_step_max = 50., 
+                weight_step_min = 0., 
+                start_step = 0.5, 
+                learn_max = 1.2, 
+                learn_min = 0.5
+            )
 
 
 network.print_test( training_one )
