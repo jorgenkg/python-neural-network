@@ -7,6 +7,20 @@ except:
     expit = lambda x: 1.0 / (1 + np.exp(-x))
 
 
+def softmax_function( signal, derivative=False ):
+    # Calculate activation signal
+    e_x = np.exp( signal - np.max(signal, axis=1, keepdims = True) )
+    signal = e_x / np.sum( e_x, axis = 1, keepdims = True )
+    
+    if derivative:
+        # Return the partial derivation of the activation function
+        return np.multiply(signal, 1 - signal)
+    else:
+        # Return the activation signal
+        return signal
+#end activation function
+
+
 def sigmoid_function( signal, derivative=False ):
     # Prevent overflow.
     signal = np.clip( signal, -500, 500 )
@@ -16,7 +30,7 @@ def sigmoid_function( signal, derivative=False ):
     
     if derivative:
         # Return the partial derivation of the activation function
-        return np.multiply(signal, 1-signal)
+        return np.multiply(signal, 1 - signal)
     else:
         # Return the activation signal
         return signal
