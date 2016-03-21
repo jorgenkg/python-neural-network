@@ -28,7 +28,18 @@ def cross_entropy_cost( outputs, targets, derivative=False ):
     if derivative:
         return (outputs - targets) / (outputs * (1 - outputs)) 
     else:
-        return -np.mean(np.sum(targets * np.log( outputs ) + (1 - targets) * np.log(1 - outputs), axis=1))
+        return np.mean(-np.sum(targets * np.log( outputs ) + (1 - targets) * np.log(1 - outputs), axis=1))
+#end cost function
+
+
+def softmax_cross_entropy_cost( outputs, targets, derivative=False ):
+    """
+    The output signals should be in the range [0, 1]
+    """
+    if derivative:
+        return outputs - targets
+    else:
+        return np.mean(-np.sum(targets * np.log( outputs ), axis=1))
 #end cost function
 
 
