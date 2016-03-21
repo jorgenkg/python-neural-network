@@ -1,3 +1,5 @@
+from activation_functions import softmax_function
+from cost_functions import softmax_cross_entropy_cost
 from tools import dropout, add_bias, confirm
 import numpy as np
 import collections
@@ -17,6 +19,15 @@ class NeuralNet:
     def __init__(self, settings ):
         self.__dict__.update( default_settings )
         self.__dict__.update( settings )
+        
+        assert not softmax_function in map(lambda (n_nodes, actfunc): actfunc, self.layers[:-1]),\
+            "The softmax function can only be applied to the final layer in the network."
+        
+        assert not self.cost_function == softmax_cross_entropy_cost or self.layers[-1][1] == softmax_function,\
+            "The `softmax_cross_entropy_cost` cost function can only be used in combination with the softmax activation function."
+        
+        assert not self.layers[-1][1] == softmax_function or self.cost_function == softmax_cross_entropy_cost,\
+             "The current implementation of the softmax activation function require the cost function to be `softmax_cross_entropy_cost`."
         
         # Count the required number of weights. This will speed up the random number generation phase
         self.n_weights = (self.n_inputs + 1) * self.layers[0][0] +\
@@ -86,9 +97,9 @@ class NeuralNet:
         input_signals, derivatives = self.update( training_data, trace=True )
         
         out                        = input_signals[-1]
+        error                      = self.cost_function(out, training_targets )
         cost_derivative            = self.cost_function(out, training_targets, derivative=True).T
         delta                      = cost_derivative * derivatives[-1]
-        error                      = self.cost_function(out, training_targets )
         
         while error > ERROR_LIMIT and epoch < max_iterations:
             epoch += 1
@@ -123,9 +134,9 @@ class NeuralNet:
             
             input_signals, derivatives = self.update( training_data, trace=True )
             out                        = input_signals[-1]
+            error                      = self.cost_function(out, training_targets )
             cost_derivative            = self.cost_function(out, training_targets, derivative=True).T
             delta                      = cost_derivative * derivatives[-1]
-            error                      = self.cost_function(out, training_targets )
             
             
             if epoch%1000==0:
