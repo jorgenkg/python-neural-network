@@ -18,14 +18,15 @@ class NeuralNet:
         self.__dict__.update( default_settings )
         self.__dict__.update( settings )
         
-        assert not softmax_function in map(lambda (n_nodes, actfunc): actfunc, self.layers[:-1]),\
-            "The softmax function can only be applied to the final layer in the network."
+        if settings["layers"][0][0]:
+            assert not softmax_function in map(lambda (n_nodes, actfunc): actfunc, self.layers[:-1]),\
+                "The softmax function can only be applied to the final layer in the network."
         
-        assert not self.cost_function == softmax_cross_entropy_cost or self.layers[-1][1] == softmax_function,\
-            "The `softmax_cross_entropy_cost` cost function can only be used in combination with the softmax activation function."
+            assert not self.cost_function == softmax_cross_entropy_cost or self.layers[-1][1] == softmax_function,\
+                "The `softmax_cross_entropy_cost` cost function can only be used in combination with the softmax activation function."
         
-        assert not self.layers[-1][1] == softmax_function or self.cost_function == softmax_cross_entropy_cost,\
-             "The current implementation of the softmax activation function require the cost function to be `softmax_cross_entropy_cost`."
+            assert not self.layers[-1][1] == softmax_function or self.cost_function == softmax_cross_entropy_cost,\
+                 "The current implementation of the softmax activation function require the cost function to be `softmax_cross_entropy_cost`."
         
         # Count the required number of weights. This will speed up the random number generation phase
         self.n_weights = (self.n_inputs + 1) * self.layers[0][0] +\
