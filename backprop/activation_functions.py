@@ -9,13 +9,16 @@ except:
 
 def softmax_function( signal, derivative=False ):
     # Calculate activation signal
-    e_x = np.exp( signal - np.max(signal, axis=1, keepdims = True) )
-    signal = e_x / np.sum( e_x, axis = 1, keepdims = True )
     
     if derivative:
-        # Return the partial derivation of the activation function
-        return np.multiply(signal, 1 - signal)
+        J = - signal[..., None] * signal[:, None, :] # off-diagonal
+        iy, ix = np.diag_indices_from(J[0])
+        J[:, iy, ix] = signal * (1. - signal) # diagonal
+        tmp = J.sum(axis=1)
+        return tmp
     else:
+        e_x = np.exp( signal - np.max(signal, axis=1, keepdims = True) )
+        signal = e_x / np.sum( e_x, axis = 1, keepdims = True )
         # Return the activation signal
         return signal
 #end activation function
@@ -65,29 +68,24 @@ def symmetric_elliot_function( signal, derivative=False ):
 
 def ReLU_function( signal, derivative=False ):
     if derivative:
-        derivate = np.maximum( 0, signal )
-        derivate[ derivate != 0 ] = 1.
-        return derivate
+        return (signal > 0)
     else:
         # Return the activation signal
         return np.maximum( 0, signal )
 #end activation function
 
 
-def LReLU_function( signal, derivative=False ):
+def LReLU_function( signal, derivative=False, leakage = 0.01 ):
     """
     Leaky Rectified Linear Unit
     """
     if derivative:
-        derivate = np.copy( signal )
-        derivate[ derivate < 0 ] = 0.01
-        derivate[ derivate > 0 ] = 1.0
         # Return the partial derivation of the activation function
-        return derivate
+        return np.clip(signal > 0, leakage, 1.0)
     else:
         # Return the activation signal
         output = np.copy( signal )
-        output[ output < 0 ] *= 0.01
+        output[ output < 0 ] *= leakage
         return output
 #end activation function
 
@@ -115,5 +113,23 @@ def linear_function( signal, derivative=False ):
 #end activation function
 
 
+def softplus_function( signal, derivative=False ):
+    if derivative:
+        # Return the partial derivation of the activation function
+        return np.exp(signal) / (1 + np.exp(signal))
+    else:
+        # Return the activation signal
+        return np.log(1 + np.exp(signal))
+#end activation function
+
+
+def softsign_function( signal, derivative=False ):
+    if derivative:
+        # Return the partial derivation of the activation function
+        return 1. / (1 + np.abs(signal))**2
+    else:
+        # Return the activation signal
+        return signal / (1 + np.abs(signal))
+#end activation function
 
 
