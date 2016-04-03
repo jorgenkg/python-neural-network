@@ -328,3 +328,71 @@ def scaled_conjugate_gradient(network, trainingset, ERROR_LIMIT = 1e-6, max_iter
     if network.save_trained_network and confirm( promt = "Do you wish to store the trained network?" ):
         network.save_to_file()
 #end scg
+
+
+def hebbian(network, trainingset, ERROR_LIMIT = 1e-3, learning_rate = 0.03, max_iterations = ()  ):
+    
+    assert trainingset[0].features.shape[0] == network.n_inputs, \
+            "ERROR: input size varies from the defined input setting"
+    
+    assert trainingset[0].targets.shape[0]  == network.layers[-1][0], \
+            "ERROR: output size varies from the defined output setting"
+    
+    
+    training_data              = np.array( [instance.features for instance in trainingset ] )
+    training_targets           = np.array( [instance.targets  for instance in trainingset ] )
+                            
+    layer_indexes              = range( len(network.layers) )[::-1]    # reversed
+    epoch                      = 0
+    
+    input_signals, derivatives = network.update( training_data, trace=True )
+    
+    out                        = input_signals[-1]
+    error                      = network.cost_function(out, training_targets )
+    
+    while error > ERROR_LIMIT and epoch < max_iterations:
+        epoch += 1
+        
+        for i in layer_indexes:
+            # Loop over the weight layers in reversed order to calculate the deltas
+            
+            
+            # calculate the weight change
+            inputs = add_bias(input_signals[i])
+            outputs = input_signals[i+1]
+            
+            print inputs.shape, outputs.shape
+            print network.weights[ i ].shape
+            
+            inputs_shaped = np.repeat(inputs[:,:,None], outputs.shape[1], axis=2)
+            outputs_shaped = np.repeat(outputs[None,:,:], input_signals[i].shape[0], axis=0)
+            
+            print inputs_shaped.shape, outputs_shaped.shape
+            
+            dW = 0.001 * np.mean(inputs_shaped * outputs_shaped, axis=0)
+            
+            
+            
+            # Update the weights
+            network.weights[ i ] += dW
+        #end weight adjustment loop
+        
+        sdfdf
+        
+        input_signals, derivatives = network.update( training_data, trace=True )
+        out                        = input_signals[-1]
+        error                      = network.cost_function(out, training_targets )
+        
+        print error
+        
+        if epoch%1000==0:
+            # Show the current training status
+            print "[training] Current error:", error, "\tEpoch:", epoch
+    
+    print "[training] Finished:"
+    print "[training]   Converged to error bound (%.4g) with error %.4g." % ( ERROR_LIMIT, error )
+    print "[training]   Trained for %d epochs." % epoch
+    
+    if network.save_trained_network and confirm( promt = "Do you wish to store the trained network?" ):
+        network.save_to_file()
+# end backprop
