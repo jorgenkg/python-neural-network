@@ -59,13 +59,13 @@ network.save_to_file( "trained_configuration.pkl" )
 # network = NeuralNet.load_from_file( "trained_configuration.pkl" )
 
 # start training on test set one with scaled conjugate gradient
-network.scg(
+scaled_conjugate_gradient(
                 training_one, 
                 ERROR_LIMIT = 1e-4
             )
 
 # start training on test set one with backpropagation
-network.backpropagation( 
+backpropagation( 
                 training_one,           # specify the training set
                 ERROR_LIMIT     = 1e-3,  # define an acceptable error limit 
                 learning_rate   = 0.03,  # learning rate
@@ -74,7 +74,7 @@ network.backpropagation(
             )
 
 # start training on test set one with backpropagation
-network.resilient_backpropagation( 
+resilient_backpropagation( 
                 training_one,          # specify the training set
                 ERROR_LIMIT     = 1e-3, # define an acceptable error limit
                 #max_iterations = (),   # continues until the error limit is reach if this argument is skipped
@@ -88,7 +88,7 @@ network.resilient_backpropagation(
             )
 
 # start training on test set one with SciPy
-network.scipyoptimize(
+scipyoptimize(
                 training_one, 
                 method = "Newton-CG",
                 ERROR_LIMIT = 1e-4
