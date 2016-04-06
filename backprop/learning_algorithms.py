@@ -1,12 +1,12 @@
-from tools import dropout, add_bias, confirm
+from tools import dropout, add_bias, confirm, save_network_to_file
 import numpy as np
 import collections
 import math
 
-all = ["backpropagation", "scaled_conjugate_gradient", "scipyoptimize", "resilient_backpropagation"]
+all = ["backpropagation", "scaled_conjugate_gradient", "scipyoptimize", "resilient_backpropagation", "generalized_hebbian"]
 
 
-def backpropagation(network, trainingset, ERROR_LIMIT = 1e-3, learning_rate = 0.03, momentum_factor = 0.9, max_iterations = ()  ):
+def backpropagation(network, trainingset, cost_function, ERROR_LIMIT = 1e-3, learning_rate = 0.03, momentum_factor = 0.9, max_iterations = (), input_layer_dropout = 0.0, hidden_layer_dropout = 0.0, save_trained_network = False  ):
     
     assert trainingset[0].features.shape[0] == network.n_inputs, \
             "ERROR: input size varies from the defined input setting"
@@ -25,8 +25,8 @@ def backpropagation(network, trainingset, ERROR_LIMIT = 1e-3, learning_rate = 0.
     input_signals, derivatives = network.update( training_data, trace=True )
     
     out                        = input_signals[-1]
-    error                      = network.cost_function(out, training_targets )
-    cost_derivative            = network.cost_function(out, training_targets, derivative=True).T
+    error                      = cost_function(out, training_targets )
+    cost_derivative            = cost_function(out, training_targets, derivative=True).T
     delta                      = cost_derivative * derivatives[-1]
     
     while error > ERROR_LIMIT and epoch < max_iterations:
@@ -39,7 +39,7 @@ def backpropagation(network, trainingset, ERROR_LIMIT = 1e-3, learning_rate = 0.
             dropped = dropout( 
                         input_signals[i], 
                         # dropout probability
-                        network.hidden_layer_dropout if i > 0 else network.input_layer_dropout
+                        hidden_layer_dropout if i > 0 else input_layer_dropout
                     )
             
             # calculate the weight change
@@ -62,8 +62,8 @@ def backpropagation(network, trainingset, ERROR_LIMIT = 1e-3, learning_rate = 0.
         
         input_signals, derivatives = network.update( training_data, trace=True )
         out                        = input_signals[-1]
-        error                      = network.cost_function(out, training_targets )
-        cost_derivative            = network.cost_function(out, training_targets, derivative=True).T
+        error                      = cost_function(out, training_targets )
+        cost_derivative            = cost_function(out, training_targets, derivative=True).T
         delta                      = cost_derivative * derivatives[-1]
         
         
@@ -75,15 +75,14 @@ def backpropagation(network, trainingset, ERROR_LIMIT = 1e-3, learning_rate = 0.
     print "[training]   Converged to error bound (%.4g) with error %.4g." % ( ERROR_LIMIT, error )
     print "[training]   Trained for %d epochs." % epoch
     
-    if network.save_trained_network and confirm( promt = "Do you wish to store the trained network?" ):
-        network.save_to_file()
+    if save_trained_network and confirm( promt = "Do you wish to store the trained network?" ):
+        save_network_to_file( network )
 # end backprop
 
-def resilient_backpropagation(network, trainingset, ERROR_LIMIT=1e-3, max_iterations = (), weight_step_max = 50., weight_step_min = 0., start_step = 0.5, learn_max = 1.2, learn_min = 0.5 ):
+
+def resilient_backpropagation(network, trainingset, cost_function, ERROR_LIMIT=1e-3, max_iterations = (), weight_step_max = 50., weight_step_min = 0., start_step = 0.5, learn_max = 1.2, learn_min = 0.5, save_trained_network = False ):
     # Implemented according to iRprop+ 
     # http://sci2s.ugr.es/keel/pdf/algorithm/articulo/2003-Neuro-Igel-IRprop+.pdf
-    assert network.input_layer_dropout == 0 and network.hidden_layer_dropout == 0, \
-            "ERROR: dropout should not be used with resilient backpropagation"
     
     assert trainingset[0].features.shape[0] == network.n_inputs, \
             "ERROR: input size varies from the defined input setting"
@@ -106,9 +105,9 @@ def resilient_backpropagation(network, trainingset, ERROR_LIMIT=1e-3, max_iterat
     
     input_signals, derivatives = network.update( training_data, trace=True )
     out                        = input_signals[-1]
-    cost_derivative            = network.cost_function(out, training_targets, derivative=True).T
+    cost_derivative            = cost_function(out, training_targets, derivative=True).T
     delta                      = cost_derivative * derivatives[-1]
-    error                      = network.cost_function(out, training_targets )
+    error                      = cost_function(out, training_targets )
     
     layer_indexes              = range( len(network.layers) )[::-1] # reversed
     prev_error                   = ( )                             # inf
@@ -173,9 +172,9 @@ def resilient_backpropagation(network, trainingset, ERROR_LIMIT=1e-3, max_iterat
         
         input_signals, derivatives = network.update( training_data, trace=True )
         out                        = input_signals[-1]
-        cost_derivative            = network.cost_function(out, training_targets, derivative=True).T
+        cost_derivative            = cost_function(out, training_targets, derivative=True).T
         delta                      = cost_derivative * derivatives[-1]
-        error                      = network.cost_function(out, training_targets )
+        error                      = cost_function(out, training_targets )
         
         if epoch%1000==0:
             # Show the current training status
@@ -185,11 +184,12 @@ def resilient_backpropagation(network, trainingset, ERROR_LIMIT=1e-3, max_iterat
     print "[training]   Converged to error bound (%.4g) with error %.4g." % ( ERROR_LIMIT, error )
     print "[training]   Trained for %d epochs." % epoch
     
-    if network.save_trained_network and confirm( promt = "Do you wish to store the trained network?" ):
-        network.save_to_file()
+    if save_trained_network and confirm( promt = "Do you wish to store the trained network?" ):
+        save_network_to_file( network )
 # end backprop
 
-def scipyoptimize(network, trainingset, method = "Newton-CG", ERROR_LIMIT = 1e-6, max_iterations = ()  ):
+
+def scipyoptimize(network, trainingset, cost_function, method = "Newton-CG", ERROR_LIMIT = 1e-6, max_iterations = (), save_trained_network = False  ):
     from scipy.optimize import minimize
     
     training_data        = np.array( [instance.features for instance in trainingset ] )
@@ -200,16 +200,16 @@ def scipyoptimize(network, trainingset, method = "Newton-CG", ERROR_LIMIT = 1e-6
         minimization_options["maxiter"] = max_iterations
         
     results = minimize( 
-        network.error,                                     # The function we are minimizing
-        network.get_weights(),                             # The vector (parameters) we are minimizing
-        args    = (training_data, training_targets),    # Additional arguments to the error and gradient function
+        network.error,                                  # The function we are minimizing
+        network.get_weights(),                          # The vector (parameters) we are minimizing
         method  = method,                               # The minimization strategy specified by the user
-        jac     = network.gradient,                        # The gradient calculating function
+        jac     = network.gradient,                     # The gradient calculating function
         tol     = ERROR_LIMIT,                          # The error limit
         options = minimization_options,                 # Additional options
+        args    = (training_data, training_targets, cost_function),  # Additional arguments to the error and gradient function
     )
     
-    network.weights = network.unpack( results.x )
+    network.set_weights( results.x )
     
     
     if not results.success:
@@ -219,16 +219,14 @@ def scipyoptimize(network, trainingset, method = "Newton-CG", ERROR_LIMIT = 1e-6
         print "[training] Finished:"
         print "[training]   Converged to error bound (%.4g) with error %.4g." % ( ERROR_LIMIT, results.fun )
         
-        if network.save_trained_network and confirm( promt = "Do you wish to store the trained network?" ):
-            network.save_to_file()
+        if save_trained_network and confirm( promt = "Do you wish to store the trained network?" ):
+            save_network_to_file( network )
 #end
 
-def scaled_conjugate_gradient(network, trainingset, ERROR_LIMIT = 1e-6, max_iterations = () ):
+
+def scaled_conjugate_gradient(network, trainingset, cost_function, ERROR_LIMIT = 1e-6, max_iterations = (), save_trained_network = False ):
     # Implemented according to the paper by Martin F. Moller
     # http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.38.3391
-    
-    assert network.input_layer_dropout == 0 and network.hidden_layer_dropout == 0, \
-            "ERROR: dropout should not be used with scaled conjugated gradients training"
             
     assert trainingset[0].features.shape[0] == network.n_inputs, \
             "ERROR: input size varies from the defined input setting"
@@ -248,7 +246,7 @@ def scaled_conjugate_gradient(network, trainingset, ERROR_LIMIT = 1e-6, max_iter
 
     vector              = network.get_weights() # The (weight) vector we will use SCG to optimalize
     N                   = len(vector)
-    grad_new            = -network.gradient( vector, training_data, training_targets )
+    grad_new            = -network.gradient( vector, training_data, training_targets, cost_function )
     r_new               = grad_new
     # end
 
@@ -263,7 +261,7 @@ def scaled_conjugate_gradient(network, trainingset, ERROR_LIMIT = 1e-6, max_iter
         if success:
             success     = False
             sigma       = sigma0 / math.sqrt(mu)
-            s           = (network.gradient(vector+sigma*grad, training_data, training_targets)-network.gradient(vector,training_data, training_targets))/sigma
+            s           = (network.gradient(vector+sigma*grad, training_data, training_targets, cost_function)-network.gradient(vector,training_data, training_targets,cost_function))/sigma
             delta       = np.dot( grad.T, s )
         #end
     
@@ -284,7 +282,7 @@ def scaled_conjugate_gradient(network, trainingset, ERROR_LIMIT = 1e-6, max_iter
         alpha           = phi/delta
     
         vector_new      = vector+alpha*grad
-        f_old, f_new    = network.error(vector,training_data, training_targets), network.error(vector_new,training_data, training_targets)
+        f_old, f_new    = network.error(vector,training_data, training_targets, cost_function), network.error(vector_new,training_data, training_targets, cost_function)
     
         comparison      = 2 * delta * (f_old - f_new)/np.power( phi, 2 )
         
@@ -294,7 +292,7 @@ def scaled_conjugate_gradient(network, trainingset, ERROR_LIMIT = 1e-6, max_iter
         
             vector      = vector_new
             f_old       = f_new
-            r_new       = -network.gradient( vector, training_data, training_targets )
+            r_new       = -network.gradient( vector, training_data, training_targets, cost_function )
         
             success     = True
             lamb_       = 0
@@ -318,20 +316,19 @@ def scaled_conjugate_gradient(network, trainingset, ERROR_LIMIT = 1e-6, max_iter
             print "[training] Current error:", f_new, "\tEpoch:", k
     #end
     
-    network.weights = network.unpack( np.array(vector_new) )
+    network.set_weights( np.array(vector_new) )
     
     print "[training] Finished:"
     print "[training]   Converged to error bound (%.4g) with error %.4g." % ( ERROR_LIMIT, f_new )
     print "[training]   Trained for %d epochs." % k
     
     
-    if network.save_trained_network and confirm( promt = "Do you wish to store the trained network?" ):
-        network.save_to_file()
+    if save_trained_network and confirm( promt = "Do you wish to store the trained network?" ):
+        save_network_to_file( network )
 #end scg
 
 
-def hebbian(network, trainingset, ERROR_LIMIT = 1e-3, learning_rate = 0.03, max_iterations = ()  ):
-    
+def generalized_hebbian(network, trainingset, cost_function, ERROR_LIMIT = 1e-3, learning_rate = 0.001, max_iterations = (), save_trained_network = False ):
     assert trainingset[0].features.shape[0] == network.n_inputs, \
             "ERROR: input size varies from the defined input setting"
     
@@ -339,51 +336,31 @@ def hebbian(network, trainingset, ERROR_LIMIT = 1e-3, learning_rate = 0.03, max_
             "ERROR: output size varies from the defined output setting"
     
     
-    training_data              = np.array( [instance.features for instance in trainingset ] )
-    training_targets           = np.array( [instance.targets  for instance in trainingset ] )
-                            
-    layer_indexes              = range( len(network.layers) )[::-1]    # reversed
-    epoch                      = 0
-    
-    input_signals, derivatives = network.update( training_data, trace=True )
-    
-    out                        = input_signals[-1]
-    error                      = network.cost_function(out, training_targets )
+    training_data               = np.array( [instance.features for instance in trainingset ] )
+    training_targets            = np.array( [instance.targets  for instance in trainingset ] )
+                                
+    layer_indexes               = range( len(network.layers) )[::-1]    # reversed
+    epoch                       = 0
+                                
+    input_signals, derivatives  = network.update( training_data, trace=True )
+                                
+    out                         = input_signals[-1]
+    error                       = cost_function( out, training_targets )
     
     while error > ERROR_LIMIT and epoch < max_iterations:
         epoch += 1
         
         for i in layer_indexes:
-            # Loop over the weight layers in reversed order to calculate the deltas
-            
-            
-            # calculate the weight change
-            inputs = add_bias(input_signals[i])
-            outputs = input_signals[i+1]
-            
-            print inputs.shape, outputs.shape
-            print network.weights[ i ].shape
-            
-            inputs_shaped = np.repeat(inputs[:,:,None], outputs.shape[1], axis=2)
-            outputs_shaped = np.repeat(outputs[None,:,:], input_signals[i].shape[0], axis=0)
-            
-            print inputs_shaped.shape, outputs_shaped.shape
-            
-            dW = 0.001 * np.mean(inputs_shaped * outputs_shaped, axis=0)
-            
-            
-            
-            # Update the weights
-            network.weights[ i ] += dW
+            forgetting_term     = np.dot(np.tril(np.dot( add_bias(input_signals[i]).T, add_bias(input_signals[i]) )), network.weights[i])
+            network.weights[i] += learning_rate * (np.dot(input_signals[i+1].T, add_bias(input_signals[i])).T - forgetting_term)
         #end weight adjustment loop
         
-        sdfdf
+        # normalize the weight to prevent the weights from growing unbounded
+        network.weights[i]     /= np.sqrt(np.sum(network.weights[i]**2))
         
         input_signals, derivatives = network.update( training_data, trace=True )
         out                        = input_signals[-1]
-        error                      = network.cost_function(out, training_targets )
-        
-        print error
+        error                      = cost_function(out, training_targets )
         
         if epoch%1000==0:
             # Show the current training status
@@ -393,6 +370,6 @@ def hebbian(network, trainingset, ERROR_LIMIT = 1e-3, learning_rate = 0.03, max_
     print "[training]   Converged to error bound (%.4g) with error %.4g." % ( ERROR_LIMIT, error )
     print "[training]   Trained for %d epochs." % epoch
     
-    if network.save_trained_network and confirm( promt = "Do you wish to store the trained network?" ):
-        network.save_to_file()
+    if save_trained_network and confirm( promt = "Do you wish to store the trained network?" ):
+        save_network_to_file( network )
 # end backprop

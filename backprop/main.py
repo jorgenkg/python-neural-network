@@ -1,30 +1,25 @@
 from activation_functions import sigmoid_function, tanh_function, linear_function,\
                                  LReLU_function, ReLU_function, elliot_function, symmetric_elliot_function, softmax_function, softplus_function, softsign_function
 from cost_functions import sum_squared_error, cross_entropy_cost, exponential_cost, hellinger_distance, softmax_cross_entropy_cost
-from learning_algorithms import backpropagation, scaled_conjugate_gradient, scipyoptimize, resilient_backpropagation, hebbian
+from learning_algorithms import backpropagation, scaled_conjugate_gradient, scipyoptimize, resilient_backpropagation, generalized_hebbian
 from neuralnet import NeuralNet
-from tools import Instance
+from tools import Instance, load_network_from_file, print_test
 
 
 # Training sets
 training_one    = [ Instance( [0,0], [0, 0, 1,0] ), Instance( [0,1], [0,1,0,1] ), Instance( [1,0], [1,0,0,1] )]
-
+cost_function   = sum_squared_error
 
 settings = {
     # Required settings
-    "cost_function"         : sum_squared_error,
     "n_inputs"              : 2,       # Number of network input signals
-    "layers"                : [ (5, linear_function), (4, linear_function) ],
+    "layers"                : [ (4, sigmoid_function) ],
                                         # [ (number_of_neurons, activation_function) ]
                                         # The last pair in you list describes the number of output signals
     
     # Optional settings
     "weights_low"           : -0.1,     # Lower bound on initial weight range
     "weights_high"          : 0.1,      # Upper bound on initial weight range
-    "save_trained_network"  : False,    # Whether to write the trained weights to disk
-    
-    "input_layer_dropout"   : 0.0,      # dropout fraction of the input layer
-    "hidden_layer_dropout"  : 0.0,      # dropout fraction in all hidden layers
 }
 
 
@@ -32,60 +27,76 @@ settings = {
 network = NeuralNet( settings )
 
 # load a stored network configuration
-# network = NeuralNet.load_from_file( "trained_configuration.pkl" )
+# network = load_from_file( "trained_configuration.pkl" )
 
-hebbian(
-        network,
-        training_one,          # specify the training set
-        ERROR_LIMIT     = 1e-3, # define an acceptable error limit 
-        #max_iterations  = 100, # continues until the error limit is reach if this argument is skipped
-                    
-        # optional parameters
-        learning_rate   = 0.06, # learning rate
-    )
-
-
-## Train the network using backpropagation
-#backpropagation(
+#generalized_hebbian(
 #        network,
 #        training_one,          # specify the training set
+#        cost_function,
 #        ERROR_LIMIT     = 1e-3, # define an acceptable error limit 
-#        #max_iterations  = 100, # continues until the error limit is reach if this argument is skipped
+#        #max_iterations  = 1000, # continues until the error limit is reach if this argument is skipped
 #                    
 #        # optional parameters
-#        learning_rate   = 0.06, # learning rate
-#        momentum_factor = 0.9, # momentum
-#         )
-#
-## Train the network using SciPy
-#scipyoptimize(
-#        network,
-#        training_one, 
-#        method = "Newton-CG",
-#        ERROR_LIMIT = 1e-4
-#    )
-#
-## Train the network using Scaled Conjugate Gradient
-#scaled_conjugate_gradient(
-#        network,
-#        training_one, 
-#        ERROR_LIMIT = 1e-4
+#        learning_rate   = 0.01, # learning rate
 #    )
 
 
-## Train the network using resilient backpropagation
-#resilient_backpropagation(
-#        network,
-#        training_one,          # specify the training set
-#        ERROR_LIMIT     = 1e-3, # define an acceptable error limit
-#        #max_iterations = (),   # continues until the error limit is reach if this argument is skipped
-#        
-#        # optional parameters
-#        weight_step_max = 50., 
-#        weight_step_min = 0., 
-#        start_step = 0.5, 
-#        learn_max = 1.2, 
-#        learn_min = 0.5
-#    )
+# Train the network using backpropagation
+backpropagation(
+        network,                        # the network to train
+        training_one,                   # specify the training set
+        cost_function,                  # specify the cost function to calculate error
+        ERROR_LIMIT          = 1e-3,    # define an acceptable error limit 
+        #max_iterations      = 100,     # continues until the error limit is reach if this argument is skipped
+                    
+        # optional parameters
+        learning_rate        = 0.06,    # learning rate
+        momentum_factor      = 0.9,     # momentum
+        input_layer_dropout  = 0.0,     # dropout fraction of the input layer
+        hidden_layer_dropout = 0.0,     # dropout fraction in all hidden layers
+        save_trained_network = False    # Whether to write the trained weights to disk
+    )
 
-#network.print_test( training_one )
+network.set_weights( network.generate_weights( network.weights_low, network.weights_high ) )
+
+# Train the network using SciPy
+scipyoptimize(
+        network,
+        training_one,
+        cost_function,
+        method               = "Newton-CG",
+        ERROR_LIMIT          = 1e-4,
+        save_trained_network = False    # Whether to write the trained weights to disk
+    )
+
+network.set_weights( network.generate_weights( network.weights_low, network.weights_high ) )
+
+# Train the network using Scaled Conjugate Gradient
+scaled_conjugate_gradient(
+        network,
+        training_one, 
+        cost_function,
+        ERROR_LIMIT          = 1e-4,
+        save_trained_network = False    # Whether to write the trained weights to disk
+    )
+
+network.set_weights( network.generate_weights( network.weights_low, network.weights_high ) )
+
+# Train the network using resilient backpropagation
+resilient_backpropagation(
+        network,
+        training_one,                   # specify the training set
+        cost_function,                 
+        ERROR_LIMIT          = 1e-3,    # define an acceptable error limit
+        #max_iterations      = (),      # continues until the error limit is reach if this argument is skipped
+        
+        # optional parameters
+        weight_step_max      = 50., 
+        weight_step_min      = 0., 
+        start_step           = 0.5, 
+        learn_max            = 1.2, 
+        learn_min            = 0.5,
+        save_trained_network = False    # Whether to write the trained weights to disk
+    )
+
+print_test( network, training_one, cost_function )
