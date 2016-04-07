@@ -9,16 +9,17 @@ except:
 
 def softmax_function( signal, derivative=False ):
     # Calculate activation signal
+    e_x = np.exp( signal - np.max(signal, axis=1, keepdims = True) )
+    signal = e_x / np.sum( e_x, axis = 1, keepdims = True )
     
     if derivative:
-        J = - signal[..., None] * signal[:, None, :] # off-diagonal
-        iy, ix = np.diag_indices_from(J[0])
-        J[:, iy, ix] = signal * (1. - signal) # diagonal
-        tmp = J.sum(axis=1)
-        return tmp
+        #J = - signal[..., None] * signal[:, None, :] # off-diagonal
+        #iy, ix = np.diag_indices_from(J[0])
+        #J[:, iy, ix] = signal * (1. - signal) # diagonal
+        #tmp = J.sum(axis=1)
+        return signal * (1. - signal)
     else:
-        e_x = np.exp( signal - np.max(signal, axis=1, keepdims = True) )
-        signal = e_x / np.sum( e_x, axis = 1, keepdims = True )
+        
         # Return the activation signal
         return signal
 #end activation function
