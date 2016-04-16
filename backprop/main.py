@@ -20,9 +20,9 @@ training_data = list_of_data[len(list_of_data)/3:]
 test_data = list_of_data[:len(list_of_data)/3]
 
 
-preprocessor = construct_preprocessor( training_data, [standarize] )
-training_data = preprocessor( training_data )
-test_data = preprocessor( test_data )
+#preprocessor = construct_preprocessor( training_data, [standarize] )
+#training_data = preprocessor( training_data )
+#test_data = preprocessor( test_data )
 
 
 settings = {
