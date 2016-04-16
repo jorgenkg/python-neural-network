@@ -1,31 +1,31 @@
 from activation_functions import sigmoid_function, tanh_function, linear_function,\
                                  LReLU_function, ReLU_function, elliot_function, symmetric_elliot_function, softmax_function, softplus_function, softsign_function
 from cost_functions import sum_squared_error, cross_entropy_cost, hellinger_distance, softmax_neg_loss
-from learning_algorithms import backpropagation, scaled_conjugate_gradient, scipyoptimize, resilient_backpropagation, generalized_hebbian
+from learning_algorithms import backpropagation, scaled_conjugate_gradient, scipyoptimize, resilient_backpropagation
 from neuralnet import NeuralNet
 from preprocessing import construct_preprocessor, standarize, replace_nan, whiten
 from data_structures import Instance, Dataset
-from tools import load_network_from_file, print_test
+from tools import print_test
 
 
 # Training sets
-dataset             = [ Instance( [0,0], [1,0,0,0] ), Instance( [1,0], [0,0,1,0] ), Instance( [0,1], [0,1,0,0] ), Instance( [1,1], [1,0,0,0] ) ]
-preprocessor        = construct_preprocessor( dataset, [whiten, standarize] ) # it is important to use the same preprocessor on ANY data that will be fed into the network. The order of the functions in the second parameter affect the produced processor.
+dataset             = [ Instance( [0,0], [0] ), Instance( [1,0], [1] ), Instance( [0,1], [1] ), Instance( [1,1], [0] ) ]
+preprocessor        = construct_preprocessor( dataset, [replace_nan, standarize] ) # it is important to use the same preprocessor on ANY data that will be fed into the network. The order of the functions in the second parameter affect the produced processor.
 training_data       = preprocessor( dataset )
 test_data           = preprocessor( dataset )
 
 
-cost_function       = softmax_neg_loss
+cost_function       = cross_entropy_cost
 settings            = {
     # Required settings
     "n_inputs"              : 2,       # Number of network input signals
-    "layers"                : [  (4, softmax_function) ],
+    "layers"                : [  (5, tanh_function), (1, sigmoid_function) ],
                                         # [ (number_of_neurons, activation_function) ]
-                                        # The last pair in you list describes the number of output signals
+                                        # The last pair in the list dictate the number of output signals
     
     # Optional settings
-    "weights_low"           : -0.1,     # Lower bound on initial weight range
-    "weights_high"          : 0.1,      # Upper bound on initial weight range
+    "weights_low"           : -0.1,     # Lower bound on the initial weight value
+    "weights_high"          : 0.1,      # Upper bound on the initial weight value
 }
 
 
@@ -36,18 +36,7 @@ network.check_gradient( training_data, cost_function )
 
 
 # load a stored network configuration
-# network           = load_from_file( "trained_configuration.pkl" )
-
-#generalized_hebbian(
-#        network,
-#        training_one,          # specify the training set
-#        cost_function,
-#        ERROR_LIMIT     = 1e-3, # define an acceptable error limit 
-#        #max_iterations  = 1000, # continues until the error limit is reach if this argument is skipped
-#                    
-#        # optional parameters
-#        learning_rate   = 0.03, # learning rate
-#    )
+# network           = NeuralNet.load_network_from_file( "network0.pkl" )
 #
 #
 # Train the network using backpropagation
