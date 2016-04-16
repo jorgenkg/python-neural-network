@@ -21,10 +21,8 @@ def backpropagation(network, trainingset, testset, cost_function, ERROR_LIMIT = 
     
     training_data              = np.array( [instance.features for instance in trainingset ] )
     training_targets           = np.array( [instance.targets  for instance in trainingset ] )
-    test_data                  = np.array( [instance.targets  for instance in testset ] )
+    test_data                  = np.array( [instance.features  for instance in testset ] )
     test_targets               = np.array( [instance.targets  for instance in testset ] )
-                 
-    print training_data.shape
           
     layer_indexes              = range( len(network.layers) )[::-1]    # reversed
     momentum                   = collections.defaultdict( int )
@@ -106,7 +104,7 @@ def resilient_backpropagation(network, trainingset, testset, cost_function, ERRO
     
     training_data              = np.array( [instance.features for instance in trainingset ] )
     training_targets           = np.array( [instance.targets  for instance in trainingset ] )
-    test_data                  = np.array( [instance.targets  for instance in testset ] )
+    test_data                  = np.array( [instance.features  for instance in testset ] )
     test_targets               = np.array( [instance.targets  for instance in testset ] )
     
     # Data structure to store the previous derivative
@@ -222,7 +220,7 @@ def scipyoptimize(network, trainingset, testset, cost_function, method = "Newton
     
     training_data              = np.array( [instance.features for instance in trainingset ] )
     training_targets           = np.array( [instance.targets  for instance in trainingset ] )
-    test_data                  = np.array( [instance.targets  for instance in testset ] )
+    test_data                  = np.array( [instance.features  for instance in testset ] )
     test_targets               = np.array( [instance.targets  for instance in testset ] )
     
     error_function_wrapper     = lambda weights, training_data, training_targets, test_data, test_targets, cost_function: network.error( weights, test_data, test_targets, cost_function )
@@ -267,8 +265,8 @@ def scaled_conjugate_gradient(network, trainingset, testset, cost_function, ERRO
     
     training_data              = np.array( [instance.features for instance in trainingset ] )
     training_targets           = np.array( [instance.targets  for instance in trainingset ] )
-    test_data                  = testset.features
-    test_targets               = testset.targets
+    test_data                  = np.array( [instance.features  for instance in testset ] )
+    test_targets               = np.array( [instance.targets  for instance in testset ] )
 
     ## Variables
     sigma0              = 1.e-6
@@ -372,7 +370,7 @@ def generalized_hebbian(network, trainingset, cost_function, ERROR_LIMIT = 1e-3,
     
     training_data              = np.array( [instance.features for instance in trainingset ] )
     training_targets           = np.array( [instance.targets  for instance in trainingset ] )
-    test_data                  = np.array( [instance.targets  for instance in testset ] )
+    test_data                  = np.array( [instance.features  for instance in testset ] )
     test_targets               = np.array( [instance.targets  for instance in testset ] )
                                 
     layer_indexes               = range( len(network.layers) )

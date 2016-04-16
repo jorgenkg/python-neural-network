@@ -20,9 +20,9 @@ training_data = list_of_data[len(list_of_data)/3:]
 test_data = list_of_data[:len(list_of_data)/3]
 
 
-#preprocessor = construct_preprocessor( training_data, [standarize] )
-#training_data = preprocessor( training_data )
-#test_data = preprocessor( test_data )
+preprocessor = construct_preprocessor( list_of_data, [standarize, whiten] )
+training_data = preprocessor( training_data )
+test_data = preprocessor( test_data )
 
 
 settings = {
@@ -59,21 +59,21 @@ network.check_gradient( training_data, cost_function )
 #
 #
 # Train the network using backpropagation
-backpropagation(
-        network,                        # the network to train
-        training_data,                   # specify the training set
-        test_data,
-        cost_function,                  # specify the cost function to calculate error
-        ERROR_LIMIT          = 1e-3,    # define an acceptable error limit 
-        #max_iterations      = 100,     # continues until the error limit is reach if this argument is skipped
-                    
-        # optional parameters
-        learning_rate        = 0.06,    # learning rate
-        momentum_factor      = 0.9,     # momentum
-        input_layer_dropout  = 0.0,     # dropout fraction of the input layer
-        hidden_layer_dropout = 0.0,     # dropout fraction in all hidden layers
-        save_trained_network = False    # Whether to write the trained weights to disk
-    )
+#backpropagation(
+#        network,                        # the network to train
+#        training_data,                   # specify the training set
+#        test_data,
+#        cost_function,                  # specify the cost function to calculate error
+#        ERROR_LIMIT          = 1e-3,    # define an acceptable error limit 
+#        #max_iterations      = 100,     # continues until the error limit is reach if this argument is skipped
+#                    
+#        # optional parameters
+#        learning_rate        = 0.06,    # learning rate
+#        momentum_factor      = 0.9,     # momentum
+#        input_layer_dropout  = 0.0,     # dropout fraction of the input layer
+#        hidden_layer_dropout = 0.0,     # dropout fraction in all hidden layers
+#        save_trained_network = False    # Whether to write the trained weights to disk
+#    )
 #
 # Train the network using SciPy
 #scipyoptimize(
@@ -96,21 +96,21 @@ backpropagation(
 #    )
 #
 # Train the network using resilient backpropagation
-#resilient_backpropagation(
-#        network,
-#        training_data,                   # specify the training set
-#        test_data,
-#        cost_function,                 
-#        ERROR_LIMIT          = 1e-3,    # define an acceptable error limit
-#        #max_iterations      = (),      # continues until the error limit is reach if this argument is skipped
-#        
-#        # optional parameters
-#        weight_step_max      = 50., 
-#        weight_step_min      = 0., 
-#        start_step           = 0.5, 
-#        learn_max            = 1.2, 
-#        learn_min            = 0.5,
-#        save_trained_network = False    # Whether to write the trained weights to disk
-#    )
+resilient_backpropagation(
+        network,
+        training_data,                   # specify the training set
+        test_data,
+        cost_function,                 
+        ERROR_LIMIT          = 1e-3,    # define an acceptable error limit
+        #max_iterations      = (),      # continues until the error limit is reach if this argument is skipped
+        
+        # optional parameters
+        weight_step_max      = 50., 
+        weight_step_min      = 0., 
+        start_step           = 0.5, 
+        learn_max            = 1.2, 
+        learn_min            = 0.5,
+        save_trained_network = False    # Whether to write the trained weights to disk
+    )
 
 print_test( network, training_data, cost_function )
