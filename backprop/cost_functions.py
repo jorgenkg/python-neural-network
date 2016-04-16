@@ -18,7 +18,7 @@ def hellinger_distance( outputs, targets, derivative=False ):
     if derivative:
         return root_difference/( np.sqrt(2) * np.sqrt( outputs ))
     else:
-        return np.sum( np.power(root_difference, 2 ), axis = 1) / math.sqrt( 2 )
+        return np.sum( np.power(root_difference, 2 ) ) / math.sqrt( 2 )
 #end cost function
 
 
