@@ -25,6 +25,10 @@ class NeuralNet:
         
         # Initialize the network with new randomized weights
         self.set_weights( self.generate_weights( self.weights_low, self.weights_high ) )
+        
+        # Initalize the bias to 0.01
+        for index in xrange(len(self.layers)):
+            self.weights[index][:1,:] = 0.01
     #end
     
     
@@ -39,17 +43,16 @@ class NeuralNet:
         # as it's useful for loading a previously optimized neural network weight set.
         # The method creates a list of weight matrices. Each list entry correspond to the 
         # connection between two layers.
-        
-        start, stop     = 0, 0
-        self.weights    = [ ]
-        previous_shape  = self.n_inputs + 1
+        start, stop         = 0, 0
+        self.weights        = [ ]
+        previous_shape      = self.n_inputs + 1 # +1 because of the bias
         
         for n_neurons, activation_function in self.layers:
-            stop += previous_shape * n_neurons
+            stop           += previous_shape * n_neurons
             self.weights.append( weight_list[ start:stop ].reshape( previous_shape, n_neurons ))
             
-            previous_shape = n_neurons + 1
-            start          = stop
+            previous_shape  = n_neurons + 1     # +1 because of the bias
+            start           = stop
     #end
     
     
@@ -74,7 +77,9 @@ class NeuralNet:
         out = self.update( training_data )
         # calculate the mean error on the data classification
         mean_error = cost_function( out, training_targets ) / float(training_data.shape[0])
+        # calculate the numeric range between the minimum and maximum output value
         range_of_predicted_values = np.max(out) - np.min(out)
+        # return the measured quality 
         return 1 - (mean_error / range_of_predicted_values)
     #end
     
@@ -88,30 +93,28 @@ class NeuralNet:
         # assign the weight_vector as the network topology
         self.set_weights( np.array(weight_vector) )
         
-        layer_indexes              = range( len(self.layers) )[::-1]    # reversed
-        input_signals, derivatives = self.update( training_data, trace=True )
+        input_signals, derivatives  = self.update( training_data, trace=True )                  
+        out                         = input_signals[-1]
+        cost_derivative             = cost_function(out, training_targets, derivative=True).T
+        delta                       = cost_derivative * derivatives[-1]
         
-        out                        = input_signals[-1]
-        cost_derivative            = cost_function(out, training_targets, derivative=True).T
-        delta                      = cost_derivative * derivatives[-1]
-        error                      = cost_function(out, training_targets )
-        n_samples           = float(training_data.shape[0])
+        layer_indexes               = range( len(self.layers) )[::-1]    # reversed
+        n_samples                   = float(training_data.shape[0])
+        deltas_by_layer             = []
         
-        layers = []
         for i in layer_indexes:
             # Loop over the weight layers in reversed order to calculate the deltas
-            layers.append((np.dot( delta, add_bias(input_signals[i]) )/n_samples).T.flat)
+            deltas_by_layer.append((np.dot( delta, add_bias(input_signals[i]) )/n_samples).T.flat)
             
             if i!= 0:
-                """Do not calculate the delta unnecessarily."""
-                # Skip the bias weight
-                weight_delta = np.dot( self.weights[ i ][1:,:], delta )
+                # i!= 0 because we don't want calculate the delta unnecessarily.
+                weight_delta        = np.dot( self.weights[ i ][1:,:], delta ) # Skip the bias weight
     
                 # Calculate the delta for the subsequent layer
-                delta = weight_delta * derivatives[i-1]
+                delta               = weight_delta * derivatives[i-1]
         #end weight adjustment loop
         
-        return np.hstack( reversed(layers) )
+        return np.hstack( reversed(deltas_by_layer) )
     # end gradient
     
     
@@ -121,40 +124,35 @@ class NeuralNet:
         assert trainingset[0].targets.shape[0]  == self.layers[-1][0], \
             "ERROR: output size varies from the configuration. Configured as %d, instance had %d" % (self.layers[-1][0], trainingset[0].targets.shape[0])
         
-        training_data              = np.array( [instance.features for instance in trainingset ] )
-        training_targets           = np.array( [instance.targets  for instance in trainingset ] )
+        training_data           = np.array( [instance.features for instance in trainingset ][:100] ) # perform the test with at most 100 instances
+        training_targets        = np.array( [instance.targets  for instance in trainingset ][:100] )
         
         # assign the weight_vector as the network topology
-        initial_weights     = np.array(self.get_weights())
-        numeric_gradient    = np.zeros( initial_weights.shape )
-        perturbed           = np.zeros( initial_weights.shape )
-        n_samples           = float(training_data.shape[0])
+        initial_weights         = np.array(self.get_weights())
+        numeric_gradient        = np.zeros( initial_weights.shape )
+        perturbed               = np.zeros( initial_weights.shape )
+        n_samples               = float(training_data.shape[0])
         
         print "[gradient check] Running gradient check..."
         
         for i in xrange( self.n_weights ):
-            perturbed[i]    = epsilon
-            
-            right_side      = self.error( initial_weights + perturbed, training_data, training_targets, cost_function )
-            left_side       = self.error( initial_weights - perturbed, training_data, training_targets, cost_function )
-            
+            perturbed[i]        = epsilon
+            right_side          = self.error( initial_weights + perturbed, training_data, training_targets, cost_function )
+            left_side           = self.error( initial_weights - perturbed, training_data, training_targets, cost_function )
             numeric_gradient[i] = (right_side - left_side) / (2 * epsilon * n_samples)
-            perturbed[i]    = 0
+            perturbed[i]        = 0
         #end loop
-        
         
         # Reset the weights
         self.set_weights( initial_weights )
         
         # Calculate the analytic gradient
-        analytic_gradient = self.gradient( self.get_weights(), training_data, training_targets, cost_function )
+        analytic_gradient       = self.gradient( self.get_weights(), training_data, training_targets, cost_function )
         
         # Compare the numeric and the analytic gradient
-        ratio = np.linalg.norm(analytic_gradient - numeric_gradient) / np.linalg.norm(analytic_gradient + numeric_gradient)
+        ratio                   = np.linalg.norm(analytic_gradient - numeric_gradient) / np.linalg.norm(analytic_gradient + numeric_gradient)
         
         if not ratio < 1e-7:
-            print numeric_gradient
-            print analytic_gradient
             raise Exception( "The numeric gradient check failed! %g" % ratio )
         else:
             print "[gradient check] Passed!"
@@ -174,13 +172,12 @@ class NeuralNet:
         
         for i, weight_layer in enumerate(self.weights):
             # Loop over the network layers and calculate the output
-            signal = np.dot( output, weight_layer[1:,:] ) + weight_layer[0:1,:] # implicit bias
-            output = self.layers[i][1]( signal )
+            signal      = np.dot( output, weight_layer[1:,:] ) + weight_layer[0:1,:] # implicit bias
+            output      = self.layers[i][1]( signal )
             
             if trace: 
                 outputs.append( output )
-                # Calculate the derivative, used during weight update
-                derivatives.append( self.layers[i][1]( signal, derivative = True ).T )
+                derivatives.append( self.layers[i][1]( signal, derivative = True ).T ) # the derivative used for weight update
         
         if trace: 
             return outputs, derivatives

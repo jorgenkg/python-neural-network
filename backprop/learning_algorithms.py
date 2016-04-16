@@ -24,16 +24,16 @@ def backpropagation(network, trainingset, testset, cost_function, ERROR_LIMIT = 
     test_data                  = np.array( [instance.features  for instance in testset ] )
     test_targets               = np.array( [instance.targets  for instance in testset ] )
           
-    layer_indexes              = range( len(network.layers) )[::-1]    # reversed
     momentum                   = collections.defaultdict( int )
-    epoch                      = 0
     
     input_signals, derivatives = network.update( training_data, trace=True )
-    
     out                        = input_signals[-1]
-    error                      = cost_function(network.update( test_data ), test_targets )
     cost_derivative            = cost_function(out, training_targets, derivative=True).T
     delta                      = cost_derivative * derivatives[-1]
+    error                      = cost_function(network.update( test_data ), test_targets )
+    
+    layer_indexes              = range( len(network.layers) )[::-1]    # reversed
+    epoch                      = 0
     n_samples                  = float(training_data.shape[0])
     
     while error > ERROR_LIMIT and epoch < max_iterations:
@@ -69,10 +69,9 @@ def backpropagation(network, trainingset, testset, cost_function, ERROR_LIMIT = 
         
         input_signals, derivatives = network.update( training_data, trace=True )
         out                        = input_signals[-1]
-        error                      = cost_function(network.update( test_data ), test_targets )
         cost_derivative            = cost_function(out, training_targets, derivative=True).T
         delta                      = cost_derivative * derivatives[-1]
-        
+        error                      = cost_function(network.update( test_data ), test_targets )
         
         if epoch%1000==0:
             # Show the current training status
@@ -107,16 +106,17 @@ def resilient_backpropagation(network, trainingset, testset, cost_function, ERRO
     test_data                  = np.array( [instance.features  for instance in testset ] )
     test_targets               = np.array( [instance.targets  for instance in testset ] )
     
-    # Data structure to store the previous derivative
-    previous_dEdW                  = [ 1 ] * len( network.weights )
-    
     # Storing the current / previous weight step size
     weight_step                = [ np.full( weight_layer.shape, start_step ) for weight_layer in network.weights ]
     
     # Storing the current / previous weight update
     dW                         = [  np.ones(shape=weight_layer.shape) for weight_layer in network.weights ]
     
-    n_samples                  = float(training_data.shape[0])
+    # Storing the previous derivative
+    previous_dEdW              = [ 1 ] * len( network.weights )
+    
+    # Storing the previous error measurement
+    prev_error                 = ( )                             # inf
     
     input_signals, derivatives = network.update( training_data, trace=True )
     out                        = input_signals[-1]
@@ -124,8 +124,8 @@ def resilient_backpropagation(network, trainingset, testset, cost_function, ERRO
     delta                      = cost_derivative * derivatives[-1]
     error                      = cost_function(network.update( test_data ), test_targets )
     
+    n_samples                  = float(training_data.shape[0])
     layer_indexes              = range( len(network.layers) )[::-1] # reversed
-    prev_error                   = ( )                             # inf
     epoch                      = 0
     
     while error > ERROR_LIMIT and epoch < max_iterations:

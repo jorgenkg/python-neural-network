@@ -9,26 +9,17 @@ from tools import load_network_from_file, print_test
 
 
 # Training sets
-training_one    = [ Instance( [0,0], [1,0,0,0] ), Instance( [1,0], [0,1,0,0] ), Instance( [0,1], [0,0,1,0] ), Instance( [1,1], [0,0,0,1] ) ]
-cost_function   = softmax_neg_loss
-
-with open("dump.txt","r") as f:
-    list_of_data = eval(f.read())
-import random
-random.shuffle( list_of_data )
-training_data = list_of_data[len(list_of_data)/3:]
-test_data = list_of_data[:len(list_of_data)/3]
+dataset             = [ Instance( [0,0], [1,0,0,0] ), Instance( [1,0], [0,0,1,0] ), Instance( [0,1], [0,1,0,0] ), Instance( [1,1], [1,0,0,0] ) ]
+preprocessor        = construct_preprocessor( dataset, [whiten, standarize] ) # it is important to use the same preprocessor on ANY data that will be fed into the network. The order of the functions in the second parameter affect the produced processor.
+training_data       = preprocessor( dataset )
+test_data           = preprocessor( dataset )
 
 
-preprocessor = construct_preprocessor( list_of_data, [standarize, whiten] )
-training_data = preprocessor( training_data )
-test_data = preprocessor( test_data )
-
-
-settings = {
+cost_function       = softmax_neg_loss
+settings            = {
     # Required settings
-    "n_inputs"              : 3,       # Number of network input signals
-    "layers"                : [ (6, softmax_function) ],
+    "n_inputs"              : 2,       # Number of network input signals
+    "layers"                : [  (4, softmax_function) ],
                                         # [ (number_of_neurons, activation_function) ]
                                         # The last pair in you list describes the number of output signals
     
@@ -39,12 +30,13 @@ settings = {
 
 
 # initialize the neural network
-network = NeuralNet( settings )
-
+network             = NeuralNet( settings )
 network.check_gradient( training_data, cost_function )
 
+
+
 # load a stored network configuration
-# network = load_from_file( "trained_configuration.pkl" )
+# network           = load_from_file( "trained_configuration.pkl" )
 
 #generalized_hebbian(
 #        network,
@@ -68,7 +60,7 @@ network.check_gradient( training_data, cost_function )
 #        #max_iterations      = 100,     # continues until the error limit is reach if this argument is skipped
 #                    
 #        # optional parameters
-#        learning_rate        = 0.06,    # learning rate
+#        learning_rate        = 0.3,    # learning rate
 #        momentum_factor      = 0.9,     # momentum
 #        input_layer_dropout  = 0.0,     # dropout fraction of the input layer
 #        hidden_layer_dropout = 0.0,     # dropout fraction in all hidden layers
