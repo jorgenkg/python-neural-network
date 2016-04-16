@@ -30,7 +30,11 @@ To train the network on a custom dataset, you will have to alter the dataset spe
 
 ``` Python
 # training set  Instance( [inputs], [targets] )
-trainingset = [ Instance( [0,0], [0] ), Instance( [0,1], [1] ), Instance( [1,0], [1] ), Instance( [1,1], [0] ) ]
+dataset             = [ Instance( [0,0], [0] ), Instance( [1,0], [1] ), Instance( [0,1], [1] ), Instance( [1,1], [0] ) ]
+preprocessor        = construct_preprocessor( dataset, [replace_nan, standarize] )
+training_data       = preprocessor( dataset ) # using the same data for the training and 
+test_data           = preprocessor( dataset ) # test set
+
 
 settings    = {
     # Required settings
@@ -38,86 +42,102 @@ settings    = {
     "n_inputs"              : 2,        # Number of network input signals
     "layers"                : [ (2, tanh_function), (1, sigmoid_function) ],
                                         # [ (number_of_neurons, activation_function) ]
-                                        # The last pair in your list describes the number of output signals
+                                        # The last pair in the list dictate the number of output signals
 
     # Optional settings
     "weights_low"           : -0.1,     # Lower bound on initial weight range
     "weights_high"          : 0.1,      # Upper bound on initial weight range
-    "save_trained_network"  : False,    # Whether to write the trained weights to disk
-
-    "input_layer_dropout"   : 0.2,      # dropout fraction of the input layer
-    "hidden_layer_dropout"  : 0.5,      # dropout fraction in all hidden layers
 }
 
 # initialize your neural network
 network = NeuralNet( settings )
 
-# save the trained network
-network.save_to_file( "trained_configuration.pkl" )
-
 # load a stored network configuration
-# network = NeuralNet.load_from_file( "trained_configuration.pkl" )
+# network = NeuralNet.load_network_from_file( "trained_configuration.pkl" )
+
+# Choose a cost function
+cost_function = cross_entropy_cost
+
+# Perform a numerical gradient check
+network.check_gradient( training_data, cost_function )
 
 # start training on test set one with scaled conjugate gradient
-network.scg(
-                training_one, 
-                ERROR_LIMIT = 1e-4
-            )
+scaled_conjugate_gradient(
+        network,
+        training_data,                  # specify the training set
+        test_data,                      # specify the test set
+        cost_function,                  # specify the cost function to calculate error
+        ERROR_LIMIT          = 1e-4,    # define an acceptable error limit 
+        save_trained_network = False    # Whether to write the trained weights to disk
+    )
 
 # start training on test set one with backpropagation
-network.backpropagation( 
-                training_one,           # specify the training set
-                ERROR_LIMIT     = 1e-3,  # define an acceptable error limit 
-                learning_rate   = 0.03,  # learning rate
-                momentum_factor = 0.45,   # momentum
-                #max_iterations  = 100,  # continues until the error limit is reach if this argument is skipped
-            )
+backpropagation(
+        network,                        # the network to train
+        training_data,                  # specify the training set
+        test_data,                      # specify the test set
+        cost_function,                  # specify the cost function to calculate error
+        ERROR_LIMIT          = 1e-3,    # define an acceptable error limit 
+        #max_iterations      = 100,     # continues until the error limit is reach if this argument is skipped
+                    
+        # optional parameters
+        learning_rate        = 0.3,     # learning rate
+        momentum_factor      = 0.9,     # momentum
+        input_layer_dropout  = 0.0,     # dropout fraction of the input layer
+        hidden_layer_dropout = 0.0,     # dropout fraction in all hidden layers
+        save_trained_network = False    # Whether to write the trained weights to disk
+    )
 
 # start training on test set one with backpropagation
-network.resilient_backpropagation( 
-                training_one,          # specify the training set
-                ERROR_LIMIT     = 1e-3, # define an acceptable error limit
-                #max_iterations = (),   # continues until the error limit is reach if this argument is skipped
-
-                # optional parameters
-                weight_step_max = 50., 
-                weight_step_min = 0., 
-                start_step = 0.5, 
-                learn_max = 1.2, 
-                learn_min = 0.5
-            )
+resilient_backpropagation(
+        network,
+        training_data,                  # specify the training set
+        test_data,                      # specify the test set
+        cost_function,                  # specify the cost function to calculate error
+        ERROR_LIMIT          = 1e-3,    # define an acceptable error limit
+        #max_iterations      = (),      # continues until the error limit is reach if this argument is skipped
+        
+        # optional parameters
+        weight_step_max      = 50., 
+        weight_step_min      = 0., 
+        start_step           = 0.5, 
+        learn_max            = 1.2, 
+        learn_min            = 0.5,
+        save_trained_network = False    # Whether to write the trained weights to disk
+    )
 
 # start training on test set one with SciPy
-network.scipyoptimize(
-                training_one, 
-                method = "Newton-CG",
-                ERROR_LIMIT = 1e-4
-            )
+scipyoptimize(
+        network,
+        training_data,                      # specify the training set
+        test_data,                          # specify the test set
+        cost_function,                      # specify the cost function to calculate error
+        method               = "L-BFGS-B",
+        save_trained_network = False        # Whether to write the trained weights to disk
+    )
 ```
 
 ## Features:
 
--  Implemented with matrix operation to improve performance.
+-  Implemented with matrix operation ensure high performance.
 -  Dropout to reduce overfitting ([as desribed here](http://jmlr.org/papers/volume15/srivastava14a/srivastava14a.pdf)). Note that dropout should only be used when using backpropagation.
 -  PYPY friendly (requires pypy-numpy).
--  Features a selection of cost functions (error functions)
+-  Features a selection of cost functions (error functions) and activation functions
 
 ## Activation functions:
 
 -  tanh
 -  Sigmoid
--  Elliot function (fast sigmoid approximation)
+-  Softmax
+-  Elliot function (fast Sigmoid approximation)
 -  Symmetric Elliot function (fast tanh approximation) 
--  Rectified Linear Unit
+-  Rectified Linear Unit (and Leaky Rectified Linear Unit)
 -  Linear activation
 
 ## Cost functions
 
 -  Sum squared error (the quadratic cost function)
 -  Cross entropy cost function
--  Exponential cost function
 -  Hellinger distance
+-  Softmax log loss (required for Softmax output layers)
 
-## Save and load learned weights
-
-If the setting `save` is initialized `True`, the network will prompt you whether to store the weights after the training has succeeded.
