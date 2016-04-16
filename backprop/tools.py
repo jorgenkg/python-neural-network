@@ -1,28 +1,26 @@
 import numpy as np
 import os
 
-class Instance:
-    # This is a simple encapsulation of a `input signal : output signal`
-    # pair in our training set.
-    def __init__(self, features, target):
-        self.features = np.array(features)
-        self.targets  = np.array(target)
-#endclass Instance
-
 
 def print_test( network, testset, cost_function ):
-    test_data    = np.array( [instance.features for instance in testset ] )
-    test_targets = np.array( [instance.targets  for instance in testset ] )
+    assert testset.features.shape[1] == network.n_inputs, \
+            "ERROR: input size varies from the defined input setting"
+
+    assert testset.targets.shape[1]  == network.layers[-1][0], \
+            "ERROR: output size varies from the defined output setting"
+            
+    test_data    = testset.features
+    test_targets = testset.targets
     
     input_signals, derivatives = network.update( test_data, trace=True )
     out                        = input_signals[-1]
     error                      = cost_function(out, test_targets )
     
     print "[testing] Network error: %.4g" % error
-    print "[testing] Network results:"
-    print "[testing]   input\tresult\ttarget"
-    for entry, result, target in zip(test_data, out, test_targets):
-        print "[testing]   %s\t%s\t%s" % tuple(map(str, [entry, result, target]))
+    #print "[testing] Network results:"
+    #print "[testing]   input\tresult\ttarget"
+    #for entry, result, target in zip(test_data, out, test_targets):
+    #    print "[testing]   %s\t%s\t%s" % tuple(map(str, [entry, result, target]))
 #end
 
 

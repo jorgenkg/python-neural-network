@@ -1,5 +1,6 @@
 from activation_functions import softmax_function
-from cost_functions import softmax_cross_entropy_cost
+from cost_functions import softmax_neg_loss
+
 from tools import add_bias
 import numpy as np
 
@@ -15,8 +16,8 @@ class NeuralNet:
         self.__dict__.update( default_settings )
         self.__dict__.update( settings )
         
-        assert not softmax_function in map(lambda (n_nodes, actfunc): actfunc, self.layers[:-1]),\
-            "The softmax function can only be applied to the final layer in the network."
+        assert not softmax_function in map(lambda x: x[1], self.layers) or softmax_function == self.layers[-1][1],\
+            "The `softmax` activation function may only be used in the final layer."
         
         # Count the required number of weights. This will speed up the random number generation when initializing weights
         self.n_weights = (self.n_inputs + 1) * self.layers[0][0] +\
@@ -68,7 +69,22 @@ class NeuralNet:
     #end
     
     
+    def measure_quality(self, training_data, training_targets, cost_function ):
+        # perform a forward operation to calculate the output signal
+        out = self.update( training_data )
+        # calculate the mean error on the data classification
+        mean_error = cost_function( out, training_targets ) / float(training_data.shape[0])
+        range_of_predicted_values = np.max(out) - np.min(out)
+        return 1 - (mean_error / range_of_predicted_values)
+    #end
+    
+    
     def gradient(self, weight_vector, training_data, training_targets, cost_function ):
+        assert softmax_function != self.layers[-1][1] or cost_function == softmax_neg_loss,\
+            "When using the `softmax` activation function, the cost function MUST be `softmax_neg_loss`."
+        assert cost_function != softmax_neg_loss or softmax_function == self.layers[-1][1],\
+            "When using the `softmax_neg_loss` cost function, the activation function in the final layer MUST be `softmax`."
+        
         # assign the weight_vector as the network topology
         self.set_weights( np.array(weight_vector) )
         
@@ -79,11 +95,12 @@ class NeuralNet:
         cost_derivative            = cost_function(out, training_targets, derivative=True).T
         delta                      = cost_derivative * derivatives[-1]
         error                      = cost_function(out, training_targets )
+        n_samples           = float(training_data.shape[0])
         
         layers = []
         for i in layer_indexes:
             # Loop over the weight layers in reversed order to calculate the deltas
-            layers.append(np.dot( delta, add_bias(input_signals[i]) ).T.flat)
+            layers.append((np.dot( delta, add_bias(input_signals[i]) )/n_samples).T.flat)
             
             if i!= 0:
                 """Do not calculate the delta unnecessarily."""
@@ -96,6 +113,54 @@ class NeuralNet:
         
         return np.hstack( reversed(layers) )
     # end gradient
+    
+    
+    def check_gradient(self, trainingset, cost_function, epsilon = 1e-4 ):
+        assert trainingset[0].features.shape[0] == self.n_inputs, \
+            "ERROR: input size varies from the configuration. Configured as %d, instance had %d" % (self.n_inputs, trainingset[0].features.shape[0])
+        assert trainingset[0].targets.shape[0]  == self.layers[-1][0], \
+            "ERROR: output size varies from the configuration. Configured as %d, instance had %d" % (self.layers[-1][0], trainingset[0].targets.shape[0])
+        
+        training_data              = np.array( [instance.features for instance in trainingset ] )
+        training_targets           = np.array( [instance.targets  for instance in trainingset ] )
+        
+        # assign the weight_vector as the network topology
+        initial_weights     = np.array(self.get_weights())
+        numeric_gradient    = np.zeros( initial_weights.shape )
+        perturbed           = np.zeros( initial_weights.shape )
+        n_samples           = float(training_data.shape[0])
+        
+        print "[gradient check] Running gradient check..."
+        
+        for i in xrange( self.n_weights ):
+            perturbed[i]    = epsilon
+            
+            right_side      = self.error( initial_weights + perturbed, training_data, training_targets, cost_function )
+            left_side       = self.error( initial_weights - perturbed, training_data, training_targets, cost_function )
+            
+            numeric_gradient[i] = (right_side - left_side) / (2 * epsilon * n_samples)
+            perturbed[i]    = 0
+        #end loop
+        
+        
+        # Reset the weights
+        self.set_weights( initial_weights )
+        
+        # Calculate the analytic gradient
+        analytic_gradient = self.gradient( self.get_weights(), training_data, training_targets, cost_function )
+        
+        # Compare the numeric and the analytic gradient
+        ratio = np.linalg.norm(analytic_gradient - numeric_gradient) / np.linalg.norm(analytic_gradient + numeric_gradient)
+        
+        if not ratio < 1e-7:
+            print numeric_gradient
+            print analytic_gradient
+            raise Exception( "The numeric gradient check failed! %g" % ratio )
+        else:
+            print "[gradient check] Passed!"
+        
+        return ratio
+    #end
     
     
     def update(self, input_values, trace=False ):

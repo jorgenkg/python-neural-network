@@ -9,16 +9,12 @@ except:
 
 def softmax_function( signal, derivative=False ):
     # Calculate activation signal
+    e_x = np.exp( signal - np.max(signal, axis=1, keepdims = True) )
+    signal = e_x / np.sum( e_x, axis = 1, keepdims = True )
     
     if derivative:
-        J = - signal[..., None] * signal[:, None, :] # off-diagonal
-        iy, ix = np.diag_indices_from(J[0])
-        J[:, iy, ix] = signal * (1. - signal) # diagonal
-        tmp = J.sum(axis=1)
-        return tmp
+        return np.ones( signal.shape )
     else:
-        e_x = np.exp( signal - np.max(signal, axis=1, keepdims = True) )
-        signal = e_x / np.sum( e_x, axis = 1, keepdims = True )
         # Return the activation signal
         return signal
 #end activation function
@@ -68,7 +64,7 @@ def symmetric_elliot_function( signal, derivative=False ):
 
 def ReLU_function( signal, derivative=False ):
     if derivative:
-        return (signal > 0)
+        return (signal > 0).astype(float)
     else:
         # Return the activation signal
         return np.maximum( 0, signal )

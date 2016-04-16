@@ -1,4 +1,6 @@
 from tools import dropout, add_bias, confirm, save_network_to_file
+from activation_functions import softmax_function
+from cost_functions import softmax_neg_loss
 import numpy as np
 import collections
 import math
@@ -6,18 +8,24 @@ import math
 all = ["backpropagation", "scaled_conjugate_gradient", "scipyoptimize", "resilient_backpropagation", "generalized_hebbian"]
 
 
-def backpropagation(network, trainingset, cost_function, ERROR_LIMIT = 1e-3, learning_rate = 0.03, momentum_factor = 0.9, max_iterations = (), input_layer_dropout = 0.0, hidden_layer_dropout = 0.0, save_trained_network = False  ):
-    
+def backpropagation(network, trainingset, testset, cost_function, ERROR_LIMIT = 1e-3, learning_rate = 0.03, momentum_factor = 0.9, max_iterations = (), input_layer_dropout = 0.0, hidden_layer_dropout = 0.0, save_trained_network = False  ):
+    assert softmax_function != network.layers[-1][1] or cost_function == softmax_neg_loss,\
+        "When using the `softmax` activation function, the cost function MUST be `softmax_neg_loss`."
+    assert cost_function != softmax_neg_loss or softmax_function == network.layers[-1][1],\
+        "When using the `softmax_neg_loss` cost function, the activation function in the final layer MUST be `softmax`."
+        
     assert trainingset[0].features.shape[0] == network.n_inputs, \
-            "ERROR: input size varies from the defined input setting"
-    
+        "ERROR: input size varies from the defined input setting"
     assert trainingset[0].targets.shape[0]  == network.layers[-1][0], \
-            "ERROR: output size varies from the defined output setting"
-    
+        "ERROR: output size varies from the defined output setting"
     
     training_data              = np.array( [instance.features for instance in trainingset ] )
     training_targets           = np.array( [instance.targets  for instance in trainingset ] )
-                            
+    test_data                  = np.array( [instance.targets  for instance in testset ] )
+    test_targets               = np.array( [instance.targets  for instance in testset ] )
+                 
+    print training_data.shape
+          
     layer_indexes              = range( len(network.layers) )[::-1]    # reversed
     momentum                   = collections.defaultdict( int )
     epoch                      = 0
@@ -25,9 +33,10 @@ def backpropagation(network, trainingset, cost_function, ERROR_LIMIT = 1e-3, lea
     input_signals, derivatives = network.update( training_data, trace=True )
     
     out                        = input_signals[-1]
-    error                      = cost_function(out, training_targets )
+    error                      = cost_function(network.update( test_data ), test_targets )
     cost_derivative            = cost_function(out, training_targets, derivative=True).T
     delta                      = cost_derivative * derivatives[-1]
+    n_samples                  = float(training_data.shape[0])
     
     while error > ERROR_LIMIT and epoch < max_iterations:
         epoch += 1
@@ -43,7 +52,7 @@ def backpropagation(network, trainingset, cost_function, ERROR_LIMIT = 1e-3, lea
                     )
             
             # calculate the weight change
-            dW = -learning_rate * np.dot( delta, add_bias(dropped) ).T + momentum_factor * momentum[i]
+            dW = -learning_rate * (np.dot( delta, add_bias(input_signals[i]) )/n_samples).T + momentum_factor * momentum[i]
             
             if i != 0:
                 """Do not calculate the delta unnecessarily."""
@@ -62,7 +71,7 @@ def backpropagation(network, trainingset, cost_function, ERROR_LIMIT = 1e-3, lea
         
         input_signals, derivatives = network.update( training_data, trace=True )
         out                        = input_signals[-1]
-        error                      = cost_function(out, training_targets )
+        error                      = cost_function(network.update( test_data ), test_targets )
         cost_derivative            = cost_function(out, training_targets, derivative=True).T
         delta                      = cost_derivative * derivatives[-1]
         
@@ -73,6 +82,7 @@ def backpropagation(network, trainingset, cost_function, ERROR_LIMIT = 1e-3, lea
     
     print "[training] Finished:"
     print "[training]   Converged to error bound (%.4g) with error %.4g." % ( ERROR_LIMIT, error )
+    print "[training]   Measured quality: %.4g" % network.measure_quality( training_data, training_targets, cost_function )
     print "[training]   Trained for %d epochs." % epoch
     
     if save_trained_network and confirm( promt = "Do you wish to store the trained network?" ):
@@ -80,18 +90,24 @@ def backpropagation(network, trainingset, cost_function, ERROR_LIMIT = 1e-3, lea
 # end backprop
 
 
-def resilient_backpropagation(network, trainingset, cost_function, ERROR_LIMIT=1e-3, max_iterations = (), weight_step_max = 50., weight_step_min = 0., start_step = 0.5, learn_max = 1.2, learn_min = 0.5, save_trained_network = False ):
+def resilient_backpropagation(network, trainingset, testset, cost_function, ERROR_LIMIT=1e-3, max_iterations = (), weight_step_max = 50., weight_step_min = 0., start_step = 0.5, learn_max = 1.2, learn_min = 0.5, save_trained_network = False ):
     # Implemented according to iRprop+ 
     # http://sci2s.ugr.es/keel/pdf/algorithm/articulo/2003-Neuro-Igel-IRprop+.pdf
     
+    assert softmax_function != network.layers[-1][1] or cost_function == softmax_neg_loss,\
+        "When using the `softmax` activation function, the cost function MUST be `softmax_neg_loss`."
+    assert cost_function != softmax_neg_loss or softmax_function == network.layers[-1][1],\
+        "When using the `softmax_neg_loss` cost function, the activation function in the final layer MUST be `softmax`."
+        
     assert trainingset[0].features.shape[0] == network.n_inputs, \
-            "ERROR: input size varies from the defined input setting"
-    
+        "ERROR: input size varies from the defined input setting"
     assert trainingset[0].targets.shape[0]  == network.layers[-1][0], \
-            "ERROR: output size varies from the defined output setting"
+        "ERROR: output size varies from the defined output setting"
     
     training_data              = np.array( [instance.features for instance in trainingset ] )
     training_targets           = np.array( [instance.targets  for instance in trainingset ] )
+    test_data                  = np.array( [instance.targets  for instance in testset ] )
+    test_targets               = np.array( [instance.targets  for instance in testset ] )
     
     # Data structure to store the previous derivative
     previous_dEdW                  = [ 1 ] * len( network.weights )
@@ -102,12 +118,13 @@ def resilient_backpropagation(network, trainingset, cost_function, ERROR_LIMIT=1
     # Storing the current / previous weight update
     dW                         = [  np.ones(shape=weight_layer.shape) for weight_layer in network.weights ]
     
+    n_samples                  = float(training_data.shape[0])
     
     input_signals, derivatives = network.update( training_data, trace=True )
     out                        = input_signals[-1]
     cost_derivative            = cost_function(out, training_targets, derivative=True).T
     delta                      = cost_derivative * derivatives[-1]
-    error                      = cost_function(out, training_targets )
+    error                      = cost_function(network.update( test_data ), test_targets )
     
     layer_indexes              = range( len(network.layers) )[::-1] # reversed
     prev_error                   = ( )                             # inf
@@ -120,7 +137,7 @@ def resilient_backpropagation(network, trainingset, cost_function, ERROR_LIMIT=1
             # Loop over the weight layers in reversed order to calculate the deltas
                    
             # Calculate the delta with respect to the weights
-            dEdW = np.dot( delta, add_bias(input_signals[i]) ).T
+            dEdW = (np.dot( delta, add_bias(input_signals[i]) )/n_samples).T
             
             if i != 0:
                 """Do not calculate the delta unnecessarily."""
@@ -174,7 +191,7 @@ def resilient_backpropagation(network, trainingset, cost_function, ERROR_LIMIT=1
         out                        = input_signals[-1]
         cost_derivative            = cost_function(out, training_targets, derivative=True).T
         delta                      = cost_derivative * derivatives[-1]
-        error                      = cost_function(out, training_targets )
+        error                      = cost_function(network.update( test_data ), test_targets )
         
         if epoch%1000==0:
             # Show the current training status
@@ -182,6 +199,7 @@ def resilient_backpropagation(network, trainingset, cost_function, ERROR_LIMIT=1
 
     print "[training] Finished:"
     print "[training]   Converged to error bound (%.4g) with error %.4g." % ( ERROR_LIMIT, error )
+    print "[training]   Measured quality: %.4g" % network.measure_quality( training_data, training_targets, cost_function )
     print "[training]   Trained for %d epochs." % epoch
     
     if save_trained_network and confirm( promt = "Do you wish to store the trained network?" ):
@@ -189,24 +207,33 @@ def resilient_backpropagation(network, trainingset, cost_function, ERROR_LIMIT=1
 # end backprop
 
 
-def scipyoptimize(network, trainingset, cost_function, method = "Newton-CG", ERROR_LIMIT = 1e-6, max_iterations = (), save_trained_network = False  ):
+def scipyoptimize(network, trainingset, testset, cost_function, method = "Newton-CG", save_trained_network = False  ):
     from scipy.optimize import minimize
     
-    training_data        = np.array( [instance.features for instance in trainingset ] )
-    training_targets     = np.array( [instance.targets  for instance in trainingset ] )
-    minimization_options = {}
+    assert softmax_function != network.layers[-1][1] or cost_function == softmax_neg_loss,\
+        "When using the `softmax` activation function, the cost function MUST be `softmax_neg_loss`."
+    assert cost_function != softmax_neg_loss or softmax_function == network.layers[-1][1],\
+        "When using the `softmax_neg_loss` cost function, the activation function in the final layer MUST be `softmax`."
+        
+    assert trainingset[0].features.shape[0] == network.n_inputs, \
+        "ERROR: input size varies from the defined input setting"
+    assert trainingset[0].targets.shape[0]  == network.layers[-1][0], \
+        "ERROR: output size varies from the defined output setting"
     
-    if max_iterations < ():
-        minimization_options["maxiter"] = max_iterations
+    training_data              = np.array( [instance.features for instance in trainingset ] )
+    training_targets           = np.array( [instance.targets  for instance in trainingset ] )
+    test_data                  = np.array( [instance.targets  for instance in testset ] )
+    test_targets               = np.array( [instance.targets  for instance in testset ] )
+    
+    error_function_wrapper     = lambda weights, training_data, training_targets, test_data, test_targets, cost_function: network.error( weights, test_data, test_targets, cost_function )
+    gradient_function_wrapper  = lambda weights, training_data, training_targets, test_data, test_targets, cost_function: network.gradient( weights, training_data, training_targets, cost_function )
         
     results = minimize( 
-        network.error,                                  # The function we are minimizing
+        error_function_wrapper,                         # The function we are minimizing
         network.get_weights(),                          # The vector (parameters) we are minimizing
         method  = method,                               # The minimization strategy specified by the user
-        jac     = network.gradient,                     # The gradient calculating function
-        tol     = ERROR_LIMIT,                          # The error limit
-        options = minimization_options,                 # Additional options
-        args    = (training_data, training_targets, cost_function),  # Additional arguments to the error and gradient function
+        jac     = gradient_function_wrapper,            # The gradient calculating function
+        args    = (training_data, training_targets, test_data, test_targets, cost_function),  # Additional arguments to the error and gradient function
     )
     
     network.set_weights( results.x )
@@ -214,30 +241,34 @@ def scipyoptimize(network, trainingset, cost_function, method = "Newton-CG", ERR
     
     if not results.success:
         print "[training] WARNING:", results.message
-        print "[training]   Converged to error bound (%.4g) with error %.4g." % ( ERROR_LIMIT, results.fun )
+        print "[training]   Terminated with error %.4g." % results.fun
     else:
         print "[training] Finished:"
-        print "[training]   Converged to error bound (%.4g) with error %.4g." % ( ERROR_LIMIT, results.fun )
+        print "[training]   Completed with error %.4g." % results.fun
         
         if save_trained_network and confirm( promt = "Do you wish to store the trained network?" ):
             save_network_to_file( network )
 #end
 
 
-def scaled_conjugate_gradient(network, trainingset, cost_function, ERROR_LIMIT = 1e-6, max_iterations = (), save_trained_network = False ):
+def scaled_conjugate_gradient(network, trainingset, testset, cost_function, ERROR_LIMIT = 1e-6, max_iterations = (), save_trained_network = False ):
     # Implemented according to the paper by Martin F. Moller
     # http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.38.3391
-            
+     
+    assert softmax_function != network.layers[-1][1] or cost_function == softmax_neg_loss,\
+        "When using the `softmax` activation function, the cost function MUST be `softmax_neg_loss`."
+    assert cost_function != softmax_neg_loss or softmax_function == network.layers[-1][1],\
+        "When using the `softmax_neg_loss` cost function, the activation function in the final layer MUST be `softmax`."
+        
     assert trainingset[0].features.shape[0] == network.n_inputs, \
-            "ERROR: input size varies from the defined input setting"
-    
+        "ERROR: input size varies from the defined input setting"
     assert trainingset[0].targets.shape[0]  == network.layers[-1][0], \
-            "ERROR: output size varies from the defined output setting"
+        "ERROR: output size varies from the defined output setting"
     
-    
-    training_data       = np.array( [instance.features for instance in trainingset ] )
-    training_targets    = np.array( [instance.targets  for instance in trainingset ] )
-    
+    training_data              = np.array( [instance.features for instance in trainingset ] )
+    training_targets           = np.array( [instance.targets  for instance in trainingset ] )
+    test_data                  = testset.features
+    test_targets               = testset.targets
 
     ## Variables
     sigma0              = 1.e-6
@@ -282,7 +313,7 @@ def scaled_conjugate_gradient(network, trainingset, cost_function, ERROR_LIMIT =
         alpha           = phi/delta
     
         vector_new      = vector+alpha*grad
-        f_old, f_new    = network.error(vector,training_data, training_targets, cost_function), network.error(vector_new,training_data, training_targets, cost_function)
+        f_old, f_new    = network.error(vector, test_data, test_targets, cost_function), network.error(vector_new, test_data, test_targets, cost_function)
     
         comparison      = 2 * delta * (f_old - f_new)/np.power( phi, 2 )
         
@@ -329,17 +360,22 @@ def scaled_conjugate_gradient(network, trainingset, cost_function, ERROR_LIMIT =
 
 
 def generalized_hebbian(network, trainingset, cost_function, ERROR_LIMIT = 1e-3, learning_rate = 0.001, max_iterations = (), save_trained_network = False ):
+    assert softmax_function != network.layers[-1][1] or cost_function == softmax_neg_loss,\
+        "When using the `softmax` activation function, the cost function MUST be `softmax_neg_loss`."
+    assert cost_function != softmax_neg_loss or softmax_function == network.layers[-1][1],\
+        "When using the `softmax_neg_loss` cost function, the activation function in the final layer MUST be `softmax`."
+        
     assert trainingset[0].features.shape[0] == network.n_inputs, \
-            "ERROR: input size varies from the defined input setting"
-    
+        "ERROR: input size varies from the defined input setting"
     assert trainingset[0].targets.shape[0]  == network.layers[-1][0], \
-            "ERROR: output size varies from the defined output setting"
+        "ERROR: output size varies from the defined output setting"
     
-    
-    training_data               = np.array( [instance.features for instance in trainingset ] )
-    training_targets            = np.array( [instance.targets  for instance in trainingset ] )
+    training_data              = np.array( [instance.features for instance in trainingset ] )
+    training_targets           = np.array( [instance.targets  for instance in trainingset ] )
+    test_data                  = np.array( [instance.targets  for instance in testset ] )
+    test_targets               = np.array( [instance.targets  for instance in testset ] )
                                 
-    layer_indexes               = range( len(network.layers) )[::-1]    # reversed
+    layer_indexes               = range( len(network.layers) )
     epoch                       = 0
                                 
     input_signals, derivatives  = network.update( training_data, trace=True )
@@ -347,12 +383,15 @@ def generalized_hebbian(network, trainingset, cost_function, ERROR_LIMIT = 1e-3,
     out                         = input_signals[-1]
     error                       = cost_function( out, training_targets )
     
+    input_signals[-1] = out - training_targets
+    
     while error > ERROR_LIMIT and epoch < max_iterations:
         epoch += 1
         
         for i in layer_indexes:
-            forgetting_term     = np.dot(np.tril(np.dot( add_bias(input_signals[i]).T, add_bias(input_signals[i]) )), network.weights[i])
-            network.weights[i] += learning_rate * (np.dot(input_signals[i+1].T, add_bias(input_signals[i])).T - forgetting_term)
+            forgetting_term     = np.dot(network.weights[i], np.tril(np.dot( input_signals[i+1].T, input_signals[i+1] )))
+            activation_product  = np.dot(add_bias(input_signals[i]).T, input_signals[i+1])
+            network.weights[i] += learning_rate * (activation_product - forgetting_term)
         #end weight adjustment loop
         
         # normalize the weight to prevent the weights from growing unbounded
