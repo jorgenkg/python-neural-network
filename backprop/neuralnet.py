@@ -152,7 +152,7 @@ class NeuralNet:
         # Compare the numeric and the analytic gradient
         ratio                   = np.linalg.norm(analytic_gradient - numeric_gradient) / np.linalg.norm(analytic_gradient + numeric_gradient)
         
-        if not ratio < 1e-7:
+        if not ratio < 1e-6:
             raise Exception( "The numeric gradient check failed! %g" % ratio )
         else:
             print "[gradient check] Passed!"
@@ -183,5 +183,45 @@ class NeuralNet:
             return outputs, derivatives
         
         return output
+    #end
+    
+    def save_network_to_file(self, filename = "network0.pkl" ):
+        import cPickle, os, re
+        """
+        This save method pickles the parameters of the current network into a 
+        binary file for persistant storage.
+        """
+    
+        if filename == "network0.pkl":
+            while os.path.exists( os.path.join(os.getcwd(), filename )):
+                filename = re.sub('\d(?!\d)', lambda x: str(int(x.group(0)) + 1), filename)
+    
+        with open( filename , 'wb') as file:
+            store_dict = {
+                "n_inputs"             : self.n_inputs,
+                "layers"               : self.layers,
+                "n_weights"            : self.n_weights,
+                "weights"              : self.weights,
+            }
+            cPickle.dump( store_dict, file, 2 )
+    #end
+
+    @staticmethod
+    def load_network_from_file( filename ):
+        import cPickle
+        """
+        Load the complete configuration of a previously stored network.
+        """
+        network = NeuralNet( {"n_inputs":1, "layers":[[0,None]]} )
+    
+        with open( filename , 'rb') as file:
+            store_dict                   = cPickle.load(file)
+        
+            network.n_inputs             = store_dict["n_inputs"]            
+            network.n_weights            = store_dict["n_weights"]           
+            network.layers               = store_dict["layers"]
+            network.weights              = store_dict["weights"]             
+    
+        return network
     #end
 #end class
