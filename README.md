@@ -38,7 +38,6 @@ test_data           = preprocessor( dataset ) # test set
 
 settings    = {
     # Required settings
-    "cost_function"         : cross_entropy_cost
     "n_inputs"              : 2,        # Number of network input signals
     "layers"                : [ (2, tanh_function), (1, sigmoid_function) ],
                                         # [ (number_of_neurons, activation_function) ]
