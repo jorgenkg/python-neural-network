@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 
 all = ["construct_preprocessor", "standarize", "replace_nan", "whiten", "pca"]
 
@@ -18,14 +19,15 @@ def standarize( trainingset ):
     Morph the input signal to a mean of 0 and scale the signal strength by 
     dividing with the standard deviation (rather that forcing a [0, 1] range)
     """
-    training_data = np.array( [instance.features for instance in trainingset ] )
     
     def encoder( dataset ):
-        for instance in dataset:
+        manipulated_dataset = copy.deepcopy( dataset )
+        for instance in manipulated_dataset:
             instance.features = (instance.features - means) / stds
-        return dataset
+        return manipulated_dataset
     #end
     
+    training_data = np.array( [instance.features for instance in trainingset ] )
     means = training_data.mean(axis=0)
     stds = training_data.std(axis=0)
     
@@ -41,7 +43,8 @@ def replace_nan( trainingset, replace_with = None ):
     training_data = np.array( [instance.features for instance in trainingset ] ).astype( np.float64 )
     
     def encoder( dataset ):
-        for instance in dataset:
+        manipulated_dataset = copy.deepcopy( dataset )
+        for instance in manipulated_dataset:
             instance.features = instance.features.astype( np.float64 )
             
             if np.sum(np.isnan( instance.features )):
@@ -49,7 +52,7 @@ def replace_nan( trainingset, replace_with = None ):
                     instance.features[ np.isnan( instance.features ) ] = means[ np.isnan( instance.features ) ]
                 else:
                     instance.features[ np.isnan( instance.features ) ] = replace_with
-        return dataset
+        return manipulated_dataset
     #end
     
     if replace_with == None:
@@ -63,9 +66,10 @@ def whiten( trainingset, epsilon = 1e-5 ):
     training_data = np.array( [instance.features for instance in trainingset ] )
     
     def encoder(dataset):
-        for instance in dataset:
+        manipulated_dataset = copy.deepcopy( dataset )
+        for instance in manipulated_dataset:
             instance.features = np.dot(instance.features, W)
-        return dataset
+        return manipulated_dataset
     #end
     
     covariance = np.dot(training_data.T, training_data)
