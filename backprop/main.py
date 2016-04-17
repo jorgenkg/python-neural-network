@@ -4,13 +4,13 @@ from cost_functions import sum_squared_error, cross_entropy_cost, hellinger_dist
 from learning_algorithms import backpropagation, scaled_conjugate_gradient, scipyoptimize, resilient_backpropagation
 from neuralnet import NeuralNet
 from preprocessing import construct_preprocessor, standarize, replace_nan, whiten
-from data_structures import Instance, Dataset
+from data_structures import Instance
 from tools import print_test
 
 
 # Training sets
 dataset             = [ Instance( [0,0], [0] ), Instance( [1,0], [1] ), Instance( [0,1], [1] ), Instance( [1,1], [0] ) ]
-preprocessor        = construct_preprocessor( dataset, [replace_nan, standarize] ) # it is important to use the same preprocessor on ANY data that will be fed into the network. The order of the functions in the second parameter affect the produced processor.
+preprocessor        = construct_preprocessor( dataset, [replace_nan, standarize] ) 
 training_data       = preprocessor( dataset )
 test_data           = preprocessor( dataset )
 
@@ -35,53 +35,57 @@ network.check_gradient( training_data, cost_function )
 
 
 
-# load a stored network configuration
+## load a stored network configuration
 # network           = NeuralNet.load_network_from_file( "network0.pkl" )
-#
-#
-# Train the network using backpropagation
+
+
+## Train the network using backpropagation
 #backpropagation(
 #        network,                        # the network to train
-#        training_data,                   # specify the training set
-#        test_data,
+#        training_data,                  # specify the training set
+#        test_data,                      # specify the test set
 #        cost_function,                  # specify the cost function to calculate error
 #        ERROR_LIMIT          = 1e-3,    # define an acceptable error limit 
 #        #max_iterations      = 100,     # continues until the error limit is reach if this argument is skipped
 #                    
 #        # optional parameters
-#        learning_rate        = 0.3,    # learning rate
+#        learning_rate        = 0.3,     # learning rate
 #        momentum_factor      = 0.9,     # momentum
 #        input_layer_dropout  = 0.0,     # dropout fraction of the input layer
 #        hidden_layer_dropout = 0.0,     # dropout fraction in all hidden layers
 #        save_trained_network = False    # Whether to write the trained weights to disk
 #    )
-#
-# Train the network using SciPy
+
+
+## Train the network using SciPy
 #scipyoptimize(
 #        network,
-#        training_data,                   # specify the training set
-#        test_data,
-#        cost_function,
+#        training_data,                      # specify the training set
+#        test_data,                          # specify the test set
+#        cost_function,                      # specify the cost function to calculate error
 #        method               = "L-BFGS-B",
-#        save_trained_network = False    # Whether to write the trained weights to disk
+#        save_trained_network = False        # Whether to write the trained weights to disk
 #    )
-#
-# Train the network using Scaled Conjugate Gradient
+
+
+
+## Train the network using Scaled Conjugate Gradient
 #scaled_conjugate_gradient(
 #        network,
-#        training_data,                   # specify the training set
-#        test_data,
-#        cost_function,
-#        ERROR_LIMIT          = 1e-4,
+#        training_data,                  # specify the training set
+#        test_data,                      # specify the test set
+#        cost_function,                  # specify the cost function to calculate error
+#        ERROR_LIMIT          = 1e-4,    # define an acceptable error limit 
 #        save_trained_network = False    # Whether to write the trained weights to disk
 #    )
-#
+
+
 # Train the network using resilient backpropagation
 resilient_backpropagation(
         network,
-        training_data,                   # specify the training set
-        test_data,
-        cost_function,                 
+        training_data,                  # specify the training set
+        test_data,                      # specify the test set
+        cost_function,                  # specify the cost function to calculate error
         ERROR_LIMIT          = 1e-3,    # define an acceptable error limit
         #max_iterations      = (),      # continues until the error limit is reach if this argument is skipped
         
@@ -94,4 +98,14 @@ resilient_backpropagation(
         save_trained_network = False    # Whether to write the trained weights to disk
     )
 
+
+# Print a network test
 print_test( network, training_data, cost_function )
+
+
+"""
+Prediction Example
+"""
+prediction_set = [ Instance([0,1]), Instance([1,0]) ]
+prediction_set = preprocessor( prediction_set )
+print network.predict( prediction_set ) # produce the output signal
