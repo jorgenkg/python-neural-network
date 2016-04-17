@@ -4,6 +4,10 @@ This is an implementation of a fully connected neural network in NumPy. The netw
 
 *The code has been tested.*
 
+#### [Visit the project page here.](http://jorgenkg.github.io/python-neural-network/)
+
+<br>
+
 ### Requirements
 
 -  Python
