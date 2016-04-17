@@ -1,6 +1,7 @@
 from activation_functions import softmax_function
-from cost_functions import softmax_cross_entropy_cost
-from tools import dropout, add_bias
+from cost_functions import softmax_neg_loss
+
+from tools import add_bias
 import numpy as np
 
 default_settings = {
@@ -8,9 +9,6 @@ default_settings = {
     "weights_low"           : -0.1,     # Lower bound on initial weight range
     "weights_high"          : 0.1,      # Upper bound on initial weight range
     "save_trained_network"  : False,    # Whether to write the trained weights to disk
-    
-    "input_layer_dropout"   : 0.0,      # dropout fraction of the input layer
-    "hidden_layer_dropout"  : 0.0,      # dropout fraction in all hidden layers
 }
 
 class NeuralNet:
@@ -18,26 +16,19 @@ class NeuralNet:
         self.__dict__.update( default_settings )
         self.__dict__.update( settings )
         
-        if settings["layers"][0][0]:
-            assert not softmax_function in map(lambda (n_nodes, actfunc): actfunc, self.layers[:-1]),\
-                "The softmax function can only be applied to the final layer in the network."
+        assert not softmax_function in map(lambda x: x[1], self.layers) or softmax_function == self.layers[-1][1],\
+            "The `softmax` activation function may only be used in the final layer."
         
-            assert not self.cost_function == softmax_cross_entropy_cost or self.layers[-1][1] == softmax_function,\
-                "The `softmax_cross_entropy_cost` cost function can only be used in combination with the softmax activation function."
-        
-            assert not self.layers[-1][1] == softmax_function or self.cost_function == softmax_cross_entropy_cost,\
-                 "The current implementation of the softmax activation function require the cost function to be `softmax_cross_entropy_cost`."
-        
-        # Count the required number of weights. This will speed up the random number generation phase
+        # Count the required number of weights. This will speed up the random number generation when initializing weights
         self.n_weights = (self.n_inputs + 1) * self.layers[0][0] +\
                          sum( (self.layers[i][0] + 1) * layer[0] for i, layer in enumerate( self.layers[1:] ) )
         
         # Initialize the network with new randomized weights
         self.set_weights( self.generate_weights( self.weights_low, self.weights_high ) )
         
-        # Initialize the bias weights (bias values) to 1
-        for i in xrange(len(self.weights)):
-            self.weights[ i ][0,:] = 1.0
+        # Initalize the bias to 0.01
+        for index in xrange(len(self.layers)):
+            self.weights[index][:1,:] = 0.01
     #end
     
     
@@ -47,29 +38,21 @@ class NeuralNet:
     #end
     
     
-    def unpack(self, weight_list ):
-        # This method will create a list of weight matrices. Each list element
-        # corresponds to the connection between two layers.
-        
-        start, stop     = 0, 0
-        weight_layers   = [ ]
-        previous_shape  = self.n_inputs + 1
+    def set_weights(self, weight_list ):
+        # This is a helper method for setting the network weights to a previously defined list
+        # as it's useful for loading a previously optimized neural network weight set.
+        # The method creates a list of weight matrices. Each list entry correspond to the 
+        # connection between two layers.
+        start, stop         = 0, 0
+        self.weights        = [ ]
+        previous_shape      = self.n_inputs + 1 # +1 because of the bias
         
         for n_neurons, activation_function in self.layers:
-            stop += previous_shape * n_neurons
-            weight_layers.append( weight_list[ start:stop ].reshape( previous_shape, n_neurons ))
+            stop           += previous_shape * n_neurons
+            self.weights.append( weight_list[ start:stop ].reshape( previous_shape, n_neurons ))
             
-            previous_shape = n_neurons + 1
-            start = stop
-        
-        return weight_layers
-    #end
-    
-    
-    def set_weights(self, weight_list ):
-        # This is a helper method for setting the network weights to a previously defined list.
-        # This is useful for utilizing a previously optimized neural network weight set.
-        self.weights = self.unpack( weight_list )
+            previous_shape  = n_neurons + 1     # +1 because of the bias
+            start           = stop
     #end
     
     
@@ -79,48 +62,103 @@ class NeuralNet:
     #end
     
     
-    def error(self, weight_vector, training_data, training_targets ):
-        self.weights = self.unpack( np.array(weight_vector) )
-        out          = self.update( training_data )
-        
-        return self.cost_function(out, training_targets )
+    def error(self, weight_vector, training_data, training_targets, cost_function ):
+        # assign the weight_vector as the network topology
+        self.set_weights( np.array(weight_vector) )
+        # perform a forward operation to calculate the output signal
+        out = self.update( training_data )
+        # evaluate the output signal with the cost function
+        return cost_function(out, training_targets )
     #end
     
     
-    def gradient(self, weight_vector, training_data, training_targets ):
-        layer_indexes              = range( len(self.layers) )[::-1]    # reversed
-        self.weights               = self.unpack( np.array(weight_vector) )
-        input_signals, derivatives = self.update( training_data, trace=True )
+    def measure_quality(self, training_data, training_targets, cost_function ):
+        # perform a forward operation to calculate the output signal
+        out = self.update( training_data )
+        # calculate the mean error on the data classification
+        mean_error = cost_function( out, training_targets ) / float(training_data.shape[0])
+        # calculate the numeric range between the minimum and maximum output value
+        range_of_predicted_values = np.max(out) - np.min(out)
+        # return the measured quality 
+        return 1 - (mean_error / range_of_predicted_values)
+    #end
+    
+    
+    def gradient(self, weight_vector, training_data, training_targets, cost_function ):
+        assert softmax_function != self.layers[-1][1] or cost_function == softmax_neg_loss,\
+            "When using the `softmax` activation function, the cost function MUST be `softmax_neg_loss`."
+        assert cost_function != softmax_neg_loss or softmax_function == self.layers[-1][1],\
+            "When using the `softmax_neg_loss` cost function, the activation function in the final layer MUST be `softmax`."
         
-        out                        = input_signals[-1]
-        cost_derivative            = self.cost_function(out, training_targets, derivative=True).T
-        delta                      = cost_derivative * derivatives[-1]
-        error                      = self.cost_function(out, training_targets )
+        # assign the weight_vector as the network topology
+        self.set_weights( np.array(weight_vector) )
         
-        layers = []
+        input_signals, derivatives  = self.update( training_data, trace=True )                  
+        out                         = input_signals[-1]
+        cost_derivative             = cost_function(out, training_targets, derivative=True).T
+        delta                       = cost_derivative * derivatives[-1]
+        
+        layer_indexes               = range( len(self.layers) )[::-1]    # reversed
+        n_samples                   = float(training_data.shape[0])
+        deltas_by_layer             = []
+        
         for i in layer_indexes:
             # Loop over the weight layers in reversed order to calculate the deltas
-            
-            # calculate the weight change
-            dropped = dropout( 
-                        input_signals[i], 
-                        # dropout probability
-                        self.hidden_layer_dropout if i > 0 else self.input_layer_dropout
-                    )
-                    
-            layers.append(np.dot( delta, add_bias(dropped) ).T.flat)
+            deltas_by_layer.append((np.dot( delta, add_bias(input_signals[i]) )/n_samples).T.flat)
             
             if i!= 0:
-                """Do not calculate the delta unnecessarily."""
-                # Skip the bias weight
-                weight_delta = np.dot( self.weights[ i ][1:,:], delta )
+                # i!= 0 because we don't want calculate the delta unnecessarily.
+                weight_delta        = np.dot( self.weights[ i ][1:,:], delta ) # Skip the bias weight
     
                 # Calculate the delta for the subsequent layer
-                delta = weight_delta * derivatives[i-1]
+                delta               = weight_delta * derivatives[i-1]
         #end weight adjustment loop
         
-        return np.hstack( reversed(layers) )
+        return np.hstack( reversed(deltas_by_layer) )
     # end gradient
+    
+    
+    def check_gradient(self, trainingset, cost_function, epsilon = 1e-4 ):
+        assert trainingset[0].features.shape[0] == self.n_inputs, \
+            "ERROR: input size varies from the configuration. Configured as %d, instance had %d" % (self.n_inputs, trainingset[0].features.shape[0])
+        assert trainingset[0].targets.shape[0]  == self.layers[-1][0], \
+            "ERROR: output size varies from the configuration. Configured as %d, instance had %d" % (self.layers[-1][0], trainingset[0].targets.shape[0])
+        
+        training_data           = np.array( [instance.features for instance in trainingset ][:100] ) # perform the test with at most 100 instances
+        training_targets        = np.array( [instance.targets  for instance in trainingset ][:100] )
+        
+        # assign the weight_vector as the network topology
+        initial_weights         = np.array(self.get_weights())
+        numeric_gradient        = np.zeros( initial_weights.shape )
+        perturbed               = np.zeros( initial_weights.shape )
+        n_samples               = float(training_data.shape[0])
+        
+        print "[gradient check] Running gradient check..."
+        
+        for i in xrange( self.n_weights ):
+            perturbed[i]        = epsilon
+            right_side          = self.error( initial_weights + perturbed, training_data, training_targets, cost_function )
+            left_side           = self.error( initial_weights - perturbed, training_data, training_targets, cost_function )
+            numeric_gradient[i] = (right_side - left_side) / (2 * epsilon * n_samples)
+            perturbed[i]        = 0
+        #end loop
+        
+        # Reset the weights
+        self.set_weights( initial_weights )
+        
+        # Calculate the analytic gradient
+        analytic_gradient       = self.gradient( self.get_weights(), training_data, training_targets, cost_function )
+        
+        # Compare the numeric and the analytic gradient
+        ratio                   = np.linalg.norm(analytic_gradient - numeric_gradient) / np.linalg.norm(analytic_gradient + numeric_gradient)
+        
+        if not ratio < 1e-6:
+            raise Exception( "The numeric gradient check failed! %g" % ratio )
+        else:
+            print "[gradient check] Passed!"
+        
+        return ratio
+    #end
     
     
     def update(self, input_values, trace=False ):
@@ -134,13 +172,12 @@ class NeuralNet:
         
         for i, weight_layer in enumerate(self.weights):
             # Loop over the network layers and calculate the output
-            signal = np.dot( output, weight_layer[1:,:] ) + weight_layer[0:1,:] # implicit bias
-            output = self.layers[i][1]( signal )
+            signal      = np.dot( output, weight_layer[1:,:] ) + weight_layer[0:1,:] # implicit bias
+            output      = self.layers[i][1]( signal )
             
             if trace: 
                 outputs.append( output )
-                # Calculate the derivative, used during weight update
-                derivatives.append( self.layers[i][1]( signal, derivative = True ).T )
+                derivatives.append( self.layers[i][1]( signal, derivative = True ).T ) # the derivative used for weight update
         
         if trace: 
             return outputs, derivatives
@@ -149,36 +186,30 @@ class NeuralNet:
     #end
     
     
-    def print_test(self, testset ):
-        test_data    = np.array( [instance.features for instance in testset ] )
-        test_targets = np.array( [instance.targets  for instance in testset ] )
+    def predict(self, predict_set ):
+        """
+        This method accepts a list of Instances
         
-        input_signals, derivatives = self.update( test_data, trace=True )
-        out                        = input_signals[-1]
-        error                      = self.cost_function(out, test_targets )
+        Eg: list_of_inputs = [ Instance([0.12, 0.54, 0.84]), Instance([0.15, 0.29, 0.49]) ]
+        """
+        predict_data           = np.array( [instance.features for instance in predict_set ] )
         
-        print "[testing] Network error: %.4g" % error
-        print "[testing] Network results:"
-        print "[testing]   input\tresult\ttarget"
-        for entry, result, target in zip(test_data, out, test_targets):
-            print "[testing]   %s\t%s\t%s" % tuple(map(str, [entry, result, target]))
+        return self.update( predict_data )
     #end
     
-    
-    def save_to_file(self, filename = "network0.pkl" ):
+    def save_network_to_file(self, filename = "network0.pkl" ):
         import cPickle, os, re
         """
         This save method pickles the parameters of the current network into a 
         binary file for persistant storage.
         """
-        
+    
         if filename == "network0.pkl":
             while os.path.exists( os.path.join(os.getcwd(), filename )):
                 filename = re.sub('\d(?!\d)', lambda x: str(int(x.group(0)) + 1), filename)
-        
+    
         with open( filename , 'wb') as file:
             store_dict = {
-                "cost_function"        : self.cost_function,
                 "n_inputs"             : self.n_inputs,
                 "layers"               : self.layers,
                 "n_weights"            : self.n_weights,
@@ -186,25 +217,23 @@ class NeuralNet:
             }
             cPickle.dump( store_dict, file, 2 )
     #end
-    
-    
+
     @staticmethod
-    def load_from_file( filename = "network.pkl" ):
+    def load_network_from_file( filename ):
+        import cPickle
         """
         Load the complete configuration of a previously stored network.
         """
         network = NeuralNet( {"n_inputs":1, "layers":[[0,None]]} )
-        
+    
         with open( filename , 'rb') as file:
-            import cPickle
             store_dict                   = cPickle.load(file)
-            
+        
             network.n_inputs             = store_dict["n_inputs"]            
             network.n_weights            = store_dict["n_weights"]           
             network.layers               = store_dict["layers"]
             network.weights              = store_dict["weights"]             
-            network.cost_function        = store_dict["cost_function"]
-        
+    
         return network
     #end
 #end class
