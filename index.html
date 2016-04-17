@@ -1,0 +1,559 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="" />
+    <meta name="author" content="Jørgen Grimnes" />
+    <!--[if IE]>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <![endif]-->
+    <title>NibleNet</title>
+    
+    
+    <link href="assets/css/bootstrap.css" rel="stylesheet" />
+    <link href="assets/css/font-awesome.min.css" rel="stylesheet" />
+    <link href="assets/css/style.css" rel="stylesheet" />
+    <link href="assets/css/prismjs.custom.css" rel="stylesheet" />
+    
+    <!-- HTML5 Shiv and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+<body>
+    <nav class="navbar navbar-static-top">
+       <div class="container-fluid">
+          <div class="navbar-header">
+             <a class="navbar-brand" href="#">
+                 <img alt="NimbleNet" src="assets/img/logo.png" height="24px">
+             </a>
+          </div>
+       </div>
+    </nav>
+    
+    
+    <section>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 col-md-offset-2">
+                    <h1>Python Neural Network</h1>
+                    <div>
+                        <!-- <img src="https://img.shields.io/github/forks/jorgenkg/python-neural-network.svg">
+                        <img src="https://img.shields.io/github/stars/jorgenkg/python-neural-network.svg"> -->
+                    </div>
+                    <h3>
+                        <small>This library sports a fully connected neural network written in Python with NumPy. The network can be trained by a variety of learning algorithms: backpropagation, resilient backpropagation, scaled conjugate gradient and SciPy's optimize function. The library was developed with PYPY in mind and should play nicely with their super-fast JIT compiler.</small>
+                    </h3>
+                </div>
+            </div>
+            <div class="row text-center">
+                <div class="col-md-8 col-md-offset-2">
+                    <a href="https://github.com/jorgenkg/python-neural-network" class="btn btn-success btn-lg">
+                        <i class="fa fa-github"></i> GitHub Page 
+                    </a>
+                    <a href="https://github.com/jorgenkg/python-neural-network/archive/master.zip" class="btn btn-primary btn-lg">
+                        <i class="fa fa-download"></i> Download
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    
+    <section>
+        <div class="container">
+            <div class="row text-center pad-bottom">
+                <div class="col-md-12">
+                    <h1>Installation</h1>
+                </div>
+            </div>
+            <div class="row">
+                <!-- <div class="row">
+                    <div class="col-md-12">
+                        <h3>With pip</h3>
+                    </div>
+                </div>
+                <div class="row">
+                      <div class="col-md-6">
+                          <pre class="language-bash"><code>
+pip install nimblenet
+                          </code></pre>
+                      </div>
+                      <div class="col-md-6">
+                          <p>Something</p>
+                      </div>
+                  </div> -->
+                  <div class="row">
+                      <div class="col-md-12">
+                          <h3>From Github</h3>
+                      </div>
+                  </div>
+                  <div class="row">
+                        <div class="col-md-6">
+                            <pre class="language-bash"><code>
+git clone https://github.com/jorgenkg/python-neural-network.git
+                            </code></pre>
+                        </div>
+                        <div class="col-md-6">
+                            <p>Fork or clone the Github repo to get started. Feel free to report Github Issues if you run into bugs.</p>
+                        </div>
+                    </div>
+            </div>
+        </div>
+    </section>
+    
+    
+    <section>
+        <div class="container">
+            <div class="row text-center pad-bottom">
+                <div class="col-md-6 col-md-offset-3">
+                    <h1>Features</h1>
+                </div>
+            </div>
+            <div class="row text-center">
+                <div class="col-sm-6 col-md-4">
+                    <span class="fa-stack fa-3x">
+                        <i class="fa fa-circle fa-stack-2x text-info"></i>
+                        <i class="fa fa-fighter-jet fa-stack-1x fa-inverse fa-button-hover"></i>
+                    </span>
+                    <h3>Fast</h3>
+                    The library has been implemented with performance in focus and uses NumPy to provide fast calculations. 
+                </div>
+                <div class="col-sm-6 col-md-4">
+                    <span class="fa-stack fa-3x">
+                        <i class="fa fa-circle fa-stack-2x text-info"></i>
+                        <i class="fa fa-gears fa-stack-1x fa-inverse fa-button-hover"></i>
+                    </span>
+                    <h3>Easily extendible</h3>
+                    The activation and cost functions are effortlessly interchangeable and it is easy to define new functions.
+                </div>
+                <div class="col-sm-6 col-md-4">
+                    <span class="fa-stack fa-3x">
+                        <i class="fa fa-circle fa-stack-2x text-info"></i>
+                        <i class="fa fa-heartbeat fa-stack-1x fa-inverse fa-button-hover"></i>
+                    </span>
+                    <h3>In active development</h3>
+                    The code is actively maintained and the issues reported on Github are always attended to. 
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    
+    <section>
+        <div class="container">
+            <div class="row text-center pad-bottom">
+                <div class="col-xs-12">
+                    <h2>User guide</h2>
+                </div>
+            </div>
+            <div class="row">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h3>Creating a network</h3>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <pre class="language-python"><code>
+from neuralnet import NeuralNet
+
+# Define the parameters for the network
+settings    = {
+    # Required settings
+    "n_inputs"              : 2,        # Number of network input signals
+    "layers"                : [ (1, sigmoid_function) ],
+                                        # [ (number_of_neurons, activation_function) ]
+                                        # The last pair in the list dictate the number of output signals
+    # Optional settings
+    "weights_low"           : -0.1,     # Lower bound on initial weight range
+    "weights_high"          : 0.1,      # Upper bound on initial weight range
+}
+
+# Initialize a neural network with two inputs and a single output signal
+network = NeuralNet( settings )
+print network.n_inputs  # 2
+print network.n_outputs # 1
+                        </code></pre>
+                    </div>
+                    <div class="col-md-6">
+                        <p>Initialize a new network by defining a settings dictionary with the required parameters <code>cost_function</code>, <code>n_inputs</code> and <code>layers</code>.</p>
+                        <p>The final pair in the <code>layers</code> list describes the number of output signals from the network. The first network initialized in the example is a single node percepteron with a sigmoid activation function.</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <pre class="language-python"><code>
+from neuralnet import NeuralNet
+
+# Define the parameters for the network
+settings    = {
+    # Required settings
+    "n_inputs"              : 2,        # Number of network input signals
+    "layers"                : [ (2, tanh_function), (4, softmax_function) ],
+                                        # [ (number_of_neurons, activation_function) ]
+                                        # The last pair in the list dictate the number of output signals
+
+    # Optional settings
+    "weights_low"           : -0.1,     # Lower bound on initial weight range
+    "weights_high"          : 0.1,      # Upper bound on initial weight range
+}
+
+# Initialize a two layered neural network with the tanh activation
+# function in the hidden layer and softmax at the output layer with four output signals.
+network = NeuralNet( settings )
+print network.n_inputs # 2
+print network.n_outputs # 2
+                        </code></pre>
+                    </div>
+                    <div class="col-md-6">
+                        <p>The second example initializes a two layered network with a softmax activation function.</p>
+                        <p>The <code>n_inputs</code> variable defines the number of input values the network will accept.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h3>Initialize a dataset</h3>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <pre class="language-python"><code>
+from data_structures import Instance
+
+# Initialize a dataset for training
+training_dataset    = [ 
+    # Instance( [input signals], [target values] )
+    Instance( [0, 0], [0, 0, 1, 0] ), Instance( [0, 1], [0, 1, 0, 1] ), Instance( [1, 0], [1, 0, 0, 1] )
+]
+
+# Initialize a dataset for testing
+test_dataset        = training_dataset # For simplicity in this guide
+                        </code></pre>
+                    </div>
+                    <div class="col-md-6">
+                        <p>Create a list of <code>Instance</code> to create a dataset. In the example we've created a dataset set with two input signals and four target values per instance.</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <pre class="language-python"><code>
+from preprocessing import construct_preprocessor, standarize, replace_nan, whiten
+
+# Initialize a preprocessor.
+dataset          = training_dataset + test_dataset
+preprocessor     = construct_preprocessor( dataset, [replace_nan, whiten, standarize] )
+
+# Apply the preprocessor to the training and test dataset
+training_dataset = preprocessor( training_dataset )
+test_dataset     = preprocessor( test_dataset     ) 
+                        </code></pre>
+                    </div>
+                    <div class="col-md-6">
+                        <p>Create a preprocessor to speed up the training phase. The preprocessor should be presented with all the data we have access to in order to produce the best possible preprocessor. If a preprocessor is used on the training data, the preprocessor <i>must</i> also be used on the input vectors used during prediction after the training. Refer to <i>Predicting</i> below.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h3>Training a network</h3>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-12">
+                        <h3><small>Gradient Checking</small></h3>
+                    </div>
+                    <div class="col-md-6">
+                        <pre class="language-python"><code>
+from cost_functions import sum_squared_error, cross_entropy_cost, hellinger_distance, softmax_neg_loss
+
+cost_function = softmax_neg_loss # The `softmax_neg_loss` is required when using softmax.
+
+# The gradient check test the gradient with 100 entries from the dataset. 
+network.check_gradient( 
+            training_dataset, 
+            cost_function 
+        )
+                        </code></pre>
+                    </div>
+                    <div class="col-md-6">
+                        <p>The numerical gradient checking may help you to verify problems with the mathematics or prove that the code is working as expected.</p>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-xs-12">
+                        <h3><small>Backpropagation</small></h3>
+                    </div>
+                    <div class="col-md-6">
+                        <pre class="language-python"><code>
+from cost_functions import sum_squared_error, cross_entropy_cost, hellinger_distance, softmax_neg_loss
+from learning_algorithms import backpropagation
+
+cost_function = softmax_neg_loss        # The `softmax_neg_loss` is required when using softmax.
+
+backpropagation(
+        network,                        # the network to train
+        training_data,                  # specify the training set
+        test_data,                      # specify the test set
+        cost_function,                  # specify the cost function to calculate error
+        ERROR_LIMIT          = 1e-3,    # define an acceptable error limit 
+        #max_iterations      = 100,     # continues until the error limit is reach if this argument is skipped
+                    
+        # optional parameters
+        learning_rate        = 0.3,     # learning rate
+        momentum_factor      = 0.9,     # momentum
+        input_layer_dropout  = 0.0,     # dropout fraction of the input layer
+        hidden_layer_dropout = 0.0,     # dropout fraction in all hidden layers
+        save_trained_network = False    # Whether to write the trained weights to disk
+    )
+                        </code></pre>
+                    </div>
+                    <div class="col-md-6">
+                        <p>The backpropagation method requires four parameters: the network to train, the training data to fit the network, a testing dataset to monitor overfitting and finally a cost function to determine the gradients. The cost function is freely interchangeable, allthough when using <code>softmax</code>, the cost function must be <code>softmax_neg_loss</code>.</p>
+                        <p>The fitting routine can be specified to terminate upon reaching an acceptable error or after a given number of iterations.</p>
+                        <p>The dropout parameters should be values in the range <code>[0, 1]</code>. The reccomended setting is <code>input_layer_dropout  = 0.5</code> and <code>hidden_layer_dropout = 0.7</code></p>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-xs-12">
+                        <h3><small>SciPy optimize</small></h3>
+                    </div>
+                    <div class="col-md-6">
+                        <pre class="language-python"><code>
+from cost_functions import sum_squared_error, cross_entropy_cost, hellinger_distance, softmax_neg_loss
+from learning_algorithms import scipyoptimize
+
+cost_function = softmax_neg_loss            # The `softmax_neg_loss` is required when using softmax.
+
+scipyoptimize(
+        network,
+        training_data,                      # specify the training set
+        test_data,                          # specify the test set
+        cost_function,                      # specify the cost function to calculate error
+        method               = "L-BFGS-B",
+        save_trained_network = False        # Whether to write the trained weights to disk
+    )
+                        </code></pre>
+                    </div>
+                    <div class="col-md-6">
+                        <p>This training method requires <code>SciPy</code>.</p>
+                        <p>The <code>method</code> parameter is redirected to SciPy's minimize function. From my own experience, the "Newton-CG" and "L-BFGS-B" are the most efficacious methods.
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-xs-12">
+                        <h3><small>Resilient Backpropagation</small></h3>
+                    </div>
+                    <div class="col-md-6">
+                        <pre class="language-python"><code>
+from cost_functions import sum_squared_error, cross_entropy_cost, hellinger_distance, softmax_neg_loss
+from learning_algorithms import resilient_backpropagation
+
+cost_function = softmax_neg_loss    # The `softmax_neg_loss` is required when using softmax.
+
+resilient_backpropagation(
+    network,
+    training_data,                  # specify the training set
+    test_data,                      # specify the test set
+    cost_function,                  # specify the cost function to calculate error
+    ERROR_LIMIT          = 1e-3,    # define an acceptable error limit
+    #max_iterations      = (),      # continues until the error limit is reach if this argument is skipped
+    
+    # optional parameters
+    weight_step_max      = 50., 
+    weight_step_min      = 0., 
+    start_step           = 0.5, 
+    learn_max            = 1.2, 
+    learn_min            = 0.5,
+    save_trained_network = False    # Whether to write the trained weights to disk
+)
+                        </code></pre>
+                    </div>
+                    <div class="col-md-6">
+                        <p>This is the iRprop+ implementation of Resilient Backpropagation.</p>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-xs-12">
+                        <h3><small>Scaled Conjugate Gradients (SCG)</small></h3>
+                    </div>
+                    <div class="col-md-6">
+                        <pre class="language-python"><code>
+from cost_functions import sum_squared_error, cross_entropy_cost, hellinger_distance, softmax_neg_loss
+from learning_algorithms import scaled_conjugate_gradient
+
+cost_function = softmax_neg_loss        # The `softmax_neg_loss` is required when using softmax.
+
+scaled_conjugate_gradient(
+        network,
+        training_data,                  # specify the training set
+        test_data,                      # specify the test set
+        cost_function,                  # specify the cost function to calculate error
+        ERROR_LIMIT          = 1e-4,    # define an acceptable error limit 
+        save_trained_network = False    # Whether to write the trained weights to disk
+    )
+                        </code></pre>
+                    </div>
+                    <div class="col-md-6">
+                        <p>This is an implementation of the <em>Scaled Conjugate Gradient for Fast Supervised Learning</em> approach described by <a href="http://www.sciencedirect.com/science/article/pii/S0893608005800565">Martin Møller</a>.</p>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </section>
+    
+    
+    <section>
+        <div class="container">
+            <div class="row pad-bottom">
+                <div class="col-md-12 text-center">
+                    <h1>Predicting</h1>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <pre class="language-python"><code>
+from data_structures import Instance
+
+# If you used a preprocessor during the training phase, the 
+# preprocessor must also be used on the data used during prediction.
+
+predict_dataset = [ 
+        # Instance( [input values] )
+        Instance( [0,1] ), Instance( [1,0] )
+    ]
+
+# preprocess the dataset
+predict_dataset = preprocessor( predict_dataset )
+
+# feed the instances to the network
+print network.predict( predict_dataset ) # return a 2D NumPy array [n_samples, n_outputs]
+
+                    </code></pre>
+                </div>
+                <div class="col-md-6">
+                    <p>When making predictions with the neural network, it is important to remember preprocessing the data if you applied a preprocessor during the training phase.</p>
+                    <p>Create a prediction set by initializing a list of <code>Instance</code>. In contrast to the instances generated when training the network, these instance will only be created with a single parameter (the input signal).</p>
+                    <p>The prediction method returns a two dimensional NumPy list (<code>shape = [n_samples, n_outputs]</code>). The first dimension of the list contain the outputs from the corresponing Instance.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    
+    <section>
+        <div class="container">
+            <div class="row text-center pad-bottom">
+                <div class="col-md-12">
+                    <h1>Putting it all together</h1>
+                </div>
+            </div>
+            <div class="row text-center">
+                <div class="col-md-12">
+                    <pre class="language-python"><code>
+from preprocessing import construct_preprocessor, standarize, replace_nan, whiten
+from activation_functions import tanh_function, softmax_function
+from learning_algorithms  import resilient_backpropagation
+from cost_functions  import softmax_neg_loss
+from data_structures import Instance
+from neuralnet import NeuralNet
+from tools import print_test
+
+
+# Training sets
+dataset             = [ Instance( [0,0], [0,1] ), Instance( [1,0], [1,0] ), Instance( [0,1], [1,0] ), Instance( [1,1], [0,1] ) ]
+preprocessor        = construct_preprocessor( dataset, [replace_nan, standarize] )
+training_data       = preprocessor( dataset )
+test_data           = training_data # for simplicity
+
+
+cost_function       = softmax_neg_loss
+settings            = {
+    # Required settings
+    "n_inputs"              : 2,       # Number of network input signals
+    "layers"                : [  (5, tanh_function), (1, softmax_function) ],
+                                        # [ (number_of_neurons, activation_function) ]
+                                        # The last pair in the list dictate the number of output signals
+    
+    # Optional settings
+    "weights_low"           : -0.1,     # Lower bound on the initial weight value
+    "weights_high"          : 0.1,      # Upper bound on the initial weight value
+}
+
+
+# Initialize the neural network
+network             = NeuralNet( settings )
+
+# Perform a numerical gradient check
+network.check_gradient( training_data, cost_function )
+
+# Train the network using resilient backpropagation
+resilient_backpropagation(
+        network,
+        training_data,                  # specify the training set
+        test_data,                      # specify the test set
+        cost_function,                  # specify the cost function to calculate error
+        ERROR_LIMIT          = 1e-3,    # define an acceptable error limit
+        #max_iterations      = (),      # continues until the error limit is reach if this argument is skipped
+        
+        # optional parameters
+        weight_step_max      = 50., 
+        weight_step_min      = 0., 
+        start_step           = 0.5, 
+        learn_max            = 1.2, 
+        learn_min            = 0.5,
+        save_trained_network = False    # Whether to write the trained weights to disk
+    )
+
+print_test( network, training_data, cost_function )
+                    </code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    
+    <section>
+        <footer>
+            <div class="container">
+                <div class="row text-center">
+                    <div class="col-xs-12">
+                        <aside class="text-muted">
+                            Designed and written by<br>
+                            <a href="http://www.grimnes.no">Jørgen Grimnes</a>
+                        </aside>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </section>
+    
+    
+    <script src="assets/js/jquery-1.11.1.js"></script>
+    <script src="assets/js/bootstrap.js"></script>
+    <script src="assets/js/prismjs.custom.js"></script>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-30375529-3', 'auto');
+      ga('send', 'pageview');
+
+    </script>
+</body>
+</html>

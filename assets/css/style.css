@@ -1,0 +1,30 @@
+﻿@import url(http://fonts.googleapis.com/css?family=Roboto); /* FREE GOOGLE FONTS */
+
+body {
+    font-family: 'Roboto', sans-serif;
+    line-height: 25px;
+    font-size: 16px;
+}
+
+section {
+    padding-top: 80px;
+    padding-bottom: 80px;
+}
+
+section:nth-child(even) {
+  background-color: rgba(237, 237, 237, 1);
+}
+
+.pad-bottom {
+    padding-bottom: 40px;
+}
+
+.btn {
+    -webkit-border-radius: 0px;
+    -moz-border-radius: 0px;
+    border-radius: 0px;
+}
+
+footer{
+  padding: 40px 0px;
+}
