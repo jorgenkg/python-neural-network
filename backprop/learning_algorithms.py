@@ -243,6 +243,7 @@ def scipyoptimize(network, trainingset, testset, cost_function, method = "Newton
     else:
         print "[training] Finished:"
         print "[training]   Completed with error %.4g." % results.fun
+        print "[training]   Measured quality: %.4g" % network.measure_quality( training_data, training_targets, cost_function )
         
         if save_trained_network and confirm( promt = "Do you wish to store the trained network?" ):
             network.save_network_to_file()
@@ -349,6 +350,7 @@ def scaled_conjugate_gradient(network, trainingset, testset, cost_function, ERRO
     
     print "[training] Finished:"
     print "[training]   Converged to error bound (%.4g) with error %.4g." % ( ERROR_LIMIT, f_new )
+    print "[training]   Measured quality: %.4g" % network.measure_quality( training_data, training_targets, cost_function )
     print "[training]   Trained for %d epochs." % k
     
     
