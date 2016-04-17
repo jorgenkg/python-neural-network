@@ -185,6 +185,18 @@ class NeuralNet:
         return output
     #end
     
+    
+    def predict(self, predict_set ):
+        """
+        This method accepts a list of Instances
+        
+        Eg: list_of_inputs = [ Instance([0.12, 0.54, 0.84]), Instance([0.15, 0.29, 0.49]) ]
+        """
+        predict_data           = np.array( [instance.features for instance in predict_set ] )
+        
+        return self.update( predict_data )
+    #end
+    
     def save_network_to_file(self, filename = "network0.pkl" ):
         import cPickle, os, re
         """
