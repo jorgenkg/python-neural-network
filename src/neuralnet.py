@@ -139,7 +139,7 @@ class NeuralNet:
             perturbed[i]        = epsilon
             right_side          = self.error( initial_weights + perturbed, training_data, training_targets, cost_function )
             left_side           = self.error( initial_weights - perturbed, training_data, training_targets, cost_function )
-            numeric_gradient[i] = (right_side - left_side) / (2 * epsilon * n_samples)
+            numeric_gradient[i] = (right_side - left_side) / (2 * epsilon)
             perturbed[i]        = 0
         #end loop
         
