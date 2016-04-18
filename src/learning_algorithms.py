@@ -3,12 +3,13 @@ from activation_functions import softmax_function
 from cost_functions import softmax_neg_loss
 import numpy as np
 import collections
+import random
 import math
 
 all = ["backpropagation", "scaled_conjugate_gradient", "scipyoptimize", "resilient_backpropagation", "generalized_hebbian"]
 
 
-def backpropagation(network, trainingset, testset, cost_function, ERROR_LIMIT = 1e-3, learning_rate = 0.03, momentum_factor = 0.9, max_iterations = (), input_layer_dropout = 0.0, hidden_layer_dropout = 0.0, save_trained_network = False  ):
+def backpropagation(network, trainingset, testset, cost_function, evaluation_function = None, ERROR_LIMIT = 1e-3, learning_rate = 0.03, momentum_factor = 0.9, max_iterations = (), batch_size = 0, input_layer_dropout = 0.0, hidden_layer_dropout = 0.0, save_trained_network = False  ):
     assert softmax_function != network.layers[-1][1] or cost_function == softmax_neg_loss,\
         "When using the `softmax` activation function, the cost function MUST be `softmax_neg_loss`."
     assert cost_function != softmax_neg_loss or softmax_function == network.layers[-1][1],\
@@ -19,59 +20,67 @@ def backpropagation(network, trainingset, testset, cost_function, ERROR_LIMIT = 
     assert trainingset[0].targets.shape[0]  == network.layers[-1][0], \
         "ERROR: output size varies from the defined output setting"
     
+    calculate_print_error      = evaluation_function if evaluation_function != None else cost_function
+    
     training_data              = np.array( [instance.features for instance in trainingset ] )
     training_targets           = np.array( [instance.targets  for instance in trainingset ] )
     test_data                  = np.array( [instance.features  for instance in testset ] )
     test_targets               = np.array( [instance.targets  for instance in testset ] )
-          
+    
+    batch_size                 = batch_size if batch_size != 0 else training_data.shape[0] 
+    batch_training_data        = np.array_split(training_data, math.ceil(1.0 * training_data.shape[0] / batch_size))
+    batch_training_targets     = np.array_split(training_targets, math.ceil(1.0 * training_targets.shape[0] / batch_size))
+    batch_indices              = range(len(batch_training_data))       # fast reference to batches
+    
+    error                      = calculate_print_error(network.update( test_data ), test_targets )
+    reversed_layer_indexes     = range( len(network.layers) )[::-1]
     momentum                   = collections.defaultdict( int )
     
-    input_signals, derivatives = network.update( training_data, trace=True )
-    out                        = input_signals[-1]
-    cost_derivative            = cost_function(out, training_targets, derivative=True).T
-    delta                      = cost_derivative * derivatives[-1]
-    error                      = cost_function(network.update( test_data ), test_targets )
-    
-    layer_indexes              = range( len(network.layers) )[::-1]    # reversed
     epoch                      = 0
-    n_samples                  = float(training_data.shape[0])
-    
     while error > ERROR_LIMIT and epoch < max_iterations:
         epoch += 1
         
-        for i in layer_indexes:
-            # Loop over the weight layers in reversed order to calculate the deltas
-            
-            # perform dropout
-            dropped = dropout( 
-                        input_signals[i], 
-                        # dropout probability
-                        hidden_layer_dropout if i > 0 else input_layer_dropout
-                    )
-            
-            # calculate the weight change
-            dW = -learning_rate * (np.dot( delta, add_bias(input_signals[i]) )/n_samples).T + momentum_factor * momentum[i]
-            
-            if i != 0:
-                """Do not calculate the delta unnecessarily."""
-                # Skip the bias weight
-                weight_delta = np.dot( network.weights[ i ][1:,:], delta )
-    
-                # Calculate the delta for the subsequent layer
-                delta = weight_delta * derivatives[i-1]
-            
-            # Store the momentum
-            momentum[i] = dW
-                                
-            # Update the weights
-            network.weights[ i ] += dW
-        #end weight adjustment loop
+        random.shuffle(batch_indices) # Shuffle the order in which the batches are processed between the iterations
         
-        input_signals, derivatives = network.update( training_data, trace=True )
-        out                        = input_signals[-1]
-        cost_derivative            = cost_function(out, training_targets, derivative=True).T
-        delta                      = cost_derivative * derivatives[-1]
-        error                      = cost_function(network.update( test_data ), test_targets )
+        for batch_index in batch_indices:
+            batch_data                 = batch_training_data[batch_index]
+            batch_targets              = batch_training_targets[batch_index]
+            batch_size                 = float(batch_data.shape[0])
+            
+            input_signals, derivatives = network.update( batch_data, trace=True )
+            out                        = input_signals[-1]
+            cost_derivative            = cost_function(out, batch_targets, derivative=True).T
+            delta                      = cost_derivative * derivatives[-1]
+            
+            for i in reversed_layer_indexes:
+                # Loop over the weight layers in reversed order to calculate the deltas
+            
+                # perform dropout
+                dropped = dropout( 
+                            input_signals[i], 
+                            # dropout probability
+                            hidden_layer_dropout if i > 0 else input_layer_dropout
+                        )
+            
+                # calculate the weight change
+                dW = -learning_rate * (np.dot( delta, add_bias(dropped) )/batch_size).T + momentum_factor * momentum[i]
+            
+                if i != 0:
+                    """Do not calculate the delta unnecessarily."""
+                    # Skip the bias weight
+                    weight_delta = np.dot( network.weights[ i ][1:,:], delta )
+    
+                    # Calculate the delta for the subsequent layer
+                    delta = weight_delta * derivatives[i-1]
+            
+                # Store the momentum
+                momentum[i] = dW
+                                
+                # Update the weights
+                network.weights[ i ] += dW
+            #end weight adjustment loop
+        
+        error = calculate_print_error(network.update( test_data ), test_targets )
         
         if epoch%1000==0:
             # Show the current training status
@@ -360,7 +369,7 @@ def scaled_conjugate_gradient(network, trainingset, testset, cost_function, ERRO
 
 
 # NOT YET IMPLEMENTED
-#def generalized_hebbian(network, trainingset, testset, cost_function, ERROR_LIMIT = 1e-3, learning_rate = 0.001, max_iterations = (), save_trained_network = False ):
+#def generalized_hebbian(network, trainingset, testset, cost_function, learning_rate = 0.001, max_iterations = (), save_trained_network = False ):
 #    assert softmax_function != network.layers[-1][1] or cost_function == softmax_neg_loss,\
 #        "When using the `softmax` activation function, the cost function MUST be `softmax_neg_loss`."
 #    assert cost_function != softmax_neg_loss or softmax_function == network.layers[-1][1],\
@@ -373,41 +382,36 @@ def scaled_conjugate_gradient(network, trainingset, testset, cost_function, ERRO
 #    
 #    training_data              = np.array( [instance.features for instance in trainingset ] )
 #    training_targets           = np.array( [instance.targets  for instance in trainingset ] )
-#    test_data                  = np.array( [instance.features  for instance in testset ] )
-#    test_targets               = np.array( [instance.targets  for instance in testset ] )
 #                                
 #    layer_indexes               = range( len(network.layers) )
 #    epoch                       = 0
 #                                
 #    input_signals, derivatives  = network.update( training_data, trace=True )
-#                                
-#    out                         = input_signals[-1]
-#    error                       = cost_function( out, training_targets )
 #    
-#    input_signals[-1] = out - training_targets
+#    input_signals[-1]           = input_signals[-1] - training_targets
 #    
-#    while error > ERROR_LIMIT and epoch < max_iterations:
+#    max_change = ()
+#    
+#    while max_change > 0.1 and epoch < max_iterations:
 #        epoch += 1
+#        max_change = 0
 #        
 #        for i in layer_indexes:
 #            forgetting_term     = np.dot(network.weights[i], np.tril(np.dot( input_signals[i+1].T, input_signals[i+1] )))
 #            activation_product  = np.dot(add_bias(input_signals[i]).T, input_signals[i+1])
-#            network.weights[i] += learning_rate * (activation_product - forgetting_term)
+#            dW                  = learning_rate * (activation_product - forgetting_term)
+#            max_change          = max(max_change, np.max( dW ))
+#            network.weights[i] += dW
+#            # normalize the weight to prevent the weights from growing unbounded
+#            network.weights[i]     /= np.sqrt(np.sum(network.weights[i]**2))
 #        #end weight adjustment loop
 #        
-#        # normalize the weight to prevent the weights from growing unbounded
-#        network.weights[i]     /= np.sqrt(np.sum(network.weights[i]**2))
-#        
 #        input_signals, derivatives = network.update( training_data, trace=True )
-#        out                        = input_signals[-1]
-#        error                      = cost_function(out, training_targets )
 #        
-#        if epoch%1000==0:
-#            # Show the current training status
-#            print "[training] Current error:", error, "\tEpoch:", epoch
+#        if epoch % 10 == 0:
+#            print "[training] Current change:", max_change
 #    
 #    print "[training] Finished:"
-#    print "[training]   Converged to error bound (%.4g) with error %.4g." % ( ERROR_LIMIT, error )
 #    print "[training]   Trained for %d epochs." % epoch
 #    
 #    if save_trained_network and confirm( promt = "Do you wish to store the trained network?" ):
