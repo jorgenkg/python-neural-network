@@ -7,7 +7,7 @@ class Instance:
     def __init__(self, features, target = None ):
         self.features = np.array(features)
         
-        if target:
+        if target != None:
             self.targets  = np.array(target)
         else:
             self.targets  = None
