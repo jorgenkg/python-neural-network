@@ -2,6 +2,7 @@ from activation_functions import sigmoid_function, tanh_function, linear_functio
                                  LReLU_function, ReLU_function, elliot_function, symmetric_elliot_function, softmax_function, softplus_function, softsign_function
 from cost_functions import sum_squared_error, cross_entropy_cost, hellinger_distance, softmax_neg_loss
 from learning_algorithms import backpropagation, scaled_conjugate_gradient, scipyoptimize, resilient_backpropagation
+from evaluation_functions import binary_accuracy
 from neuralnet import NeuralNet
 from preprocessing import construct_preprocessor, standarize, replace_nan, whiten
 from data_structures import Instance
@@ -10,16 +11,16 @@ from tools import print_test
 
 # Training sets
 dataset             = [ Instance( [0,0], [0] ), Instance( [1,0], [1] ), Instance( [0,1], [1] ), Instance( [1,1], [0] ) ]
-preprocessor        = construct_preprocessor( dataset, [replace_nan, standarize] ) 
+preprocessor        = construct_preprocessor( dataset, [standarize] ) 
 training_data       = preprocessor( dataset )
 test_data           = preprocessor( dataset )
 
 
-cost_function       = cross_entropy_cost
+cost_function       = sum_squared_error
 settings            = {
     # Required settings
     "n_inputs"              : 2,       # Number of network input signals
-    "layers"                : [  (5, tanh_function), (1, sigmoid_function) ],
+    "layers"                : [  (3, sigmoid_function), (1, sigmoid_function) ],
                                         # [ (number_of_neurons, activation_function) ]
                                         # The last pair in the list dictate the number of output signals
     
@@ -40,21 +41,24 @@ network.check_gradient( training_data, cost_function )
 
 
 ## Train the network using backpropagation
-#backpropagation(
-#        network,                        # the network to train
-#        training_data,                  # specify the training set
-#        test_data,                      # specify the test set
-#        cost_function,                  # specify the cost function to calculate error
-#        ERROR_LIMIT          = 1e-3,    # define an acceptable error limit 
-#        #max_iterations      = 100,     # continues until the error limit is reach if this argument is skipped
-#                    
-#        # optional parameters
-#        learning_rate        = 0.3,     # learning rate
-#        momentum_factor      = 0.9,     # momentum
-#        input_layer_dropout  = 0.0,     # dropout fraction of the input layer
-#        hidden_layer_dropout = 0.0,     # dropout fraction in all hidden layers
-#        save_trained_network = False    # Whether to write the trained weights to disk
-#    )
+backpropagation(
+        network,                        # the network to train
+        training_data,                  # specify the training set
+        test_data,                      # specify the test set
+        cost_function,                  # specify the cost function to calculate error
+        
+        evaluation_function  = binary_accuracy,
+        ERROR_LIMIT          = 1e-3,    # define an acceptable error limit 
+        #max_iterations      = 100,     # continues until the error limit is reach if this argument is skipped
+                    
+        # optional parameters
+        batch_size           = 1,
+        learning_rate        = 0.3,     # learning rate
+        momentum_factor      = 0.9,     # momentum
+        input_layer_dropout  = 0.0,     # dropout fraction of the input layer
+        hidden_layer_dropout = 0.0,     # dropout fraction in all hidden layers
+        save_trained_network = False    # Whether to write the trained weights to disk
+    )
 
 
 ## Train the network using SciPy
