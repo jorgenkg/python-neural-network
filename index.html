@@ -86,6 +86,21 @@ pip install nimblenet
                           <p>Something</p>
                       </div>
                   </div> -->
+                <div class="row">
+                    <div class="col-md-12">
+                        <h3>From PyPI</h3>
+                    </div>
+                </div>
+                <div class="row">
+                      <div class="col-md-6">
+                          <pre class="language-bash"><code>
+pip install nimblenet
+                          </code></pre>
+                      </div>
+                      <div class="col-md-6">
+                          <p>Easily install NimbleNet from PyPI, the only requirement is NumPy. Install SciPy as well if you would like to train the network using <code>optimize()</code>.</p>
+                      </div>
+                  </div>
                   <div class="row">
                       <div class="col-md-12">
                           <h3>From Github</h3>
@@ -159,7 +174,7 @@ git clone https://github.com/jorgenkg/python-neural-network.git
                 <div class="row">
                     <div class="col-md-6">
                         <pre class="language-python"><code>
-from neuralnet import NeuralNet
+from nimblenet.neuralnet import NeuralNet
 
 # Define the parameters for the network
 settings    = {
@@ -185,7 +200,7 @@ network = NeuralNet( settings )
                 <div class="row">
                     <div class="col-md-6">
                         <pre class="language-python"><code>
-from neuralnet import NeuralNet
+from nimblenet.neuralnet import NeuralNet
 
 # Define the parameters for the network
 settings    = {
@@ -221,7 +236,7 @@ network = NeuralNet( settings )
                 <div class="row">
                     <div class="col-md-6">
                         <pre class="language-python"><code>
-from data_structures import Instance
+from nimblenet.data_structures import Instance
 
 # Initialize a dataset for training
 training_dataset    = [ 
@@ -240,7 +255,7 @@ test_dataset        = training_dataset # For simplicity in this guide
                 <div class="row">
                     <div class="col-md-6">
                         <pre class="language-python"><code>
-from preprocessing import construct_preprocessor, standarize, replace_nan, whiten
+from nimblenet.preprocessing import construct_preprocessor, standarize, replace_nan, whiten
 
 # Initialize a preprocessor.
 dataset          = training_dataset + test_dataset
@@ -269,7 +284,7 @@ test_dataset     = preprocessor( test_dataset     )
                     </div>
                     <div class="col-md-6">
                         <pre class="language-python"><code>
-from cost_functions import sum_squared_error, cross_entropy_cost, hellinger_distance, softmax_neg_loss
+from nimblenet.cost_functions import sum_squared_error, cross_entropy_cost, hellinger_distance, softmax_neg_loss
 
 cost_function = softmax_neg_loss # The `softmax_neg_loss` is required when using softmax.
 
@@ -291,8 +306,8 @@ network.check_gradient(
                     </div>
                     <div class="col-md-6">
                         <pre class="language-python"><code>
-from cost_functions import sum_squared_error, cross_entropy_cost, hellinger_distance, softmax_neg_loss
-from learning_algorithms import backpropagation
+from nimblenet.cost_functions import sum_squared_error, cross_entropy_cost, hellinger_distance, softmax_neg_loss
+from nimblenet.learning_algorithms import backpropagation
 
 cost_function = softmax_neg_loss        # The `softmax_neg_loss` is required when using softmax.
 
@@ -326,8 +341,8 @@ backpropagation(
                     </div>
                     <div class="col-md-6">
                         <pre class="language-python"><code>
-from cost_functions import sum_squared_error, cross_entropy_cost, hellinger_distance, softmax_neg_loss
-from learning_algorithms import scipyoptimize
+from nimblenet.cost_functions import sum_squared_error, cross_entropy_cost, hellinger_distance, softmax_neg_loss
+from nimblenet.learning_algorithms import scipyoptimize
 
 cost_function = softmax_neg_loss            # The `softmax_neg_loss` is required when using softmax.
 
@@ -353,8 +368,8 @@ scipyoptimize(
                     </div>
                     <div class="col-md-6">
                         <pre class="language-python"><code>
-from cost_functions import sum_squared_error, cross_entropy_cost, hellinger_distance, softmax_neg_loss
-from learning_algorithms import resilient_backpropagation
+from nimblenet.cost_functions import sum_squared_error, cross_entropy_cost, hellinger_distance, softmax_neg_loss
+from nimblenet.learning_algorithms import resilient_backpropagation
 
 cost_function = softmax_neg_loss    # The `softmax_neg_loss` is required when using softmax.
 
@@ -387,8 +402,8 @@ resilient_backpropagation(
                     </div>
                     <div class="col-md-6">
                         <pre class="language-python"><code>
-from cost_functions import sum_squared_error, cross_entropy_cost, hellinger_distance, softmax_neg_loss
-from learning_algorithms import scaled_conjugate_gradient
+from nimblenet.cost_functions import sum_squared_error, cross_entropy_cost, hellinger_distance, softmax_neg_loss
+from nimblenet.learning_algorithms import scaled_conjugate_gradient
 
 cost_function = softmax_neg_loss        # The `softmax_neg_loss` is required when using softmax.
 
@@ -422,7 +437,7 @@ scaled_conjugate_gradient(
             <div class="row">
                 <div class="col-md-6">
                     <pre class="language-python"><code>
-from data_structures import Instance
+from nimblenet.data_structures import Instance
 
 # If you used a preprocessor during the training phase, the 
 # preprocessor must also be used on the data used during prediction.
@@ -460,13 +475,13 @@ print network.predict( predict_dataset ) # return a 2D NumPy array [n_samples, n
             <div class="row text-center">
                 <div class="col-md-12">
                     <pre class="language-python"><code>
-from preprocessing import construct_preprocessor, standarize, replace_nan, whiten
-from activation_functions import tanh_function, softmax_function
-from learning_algorithms  import resilient_backpropagation
-from cost_functions  import softmax_neg_loss
-from data_structures import Instance
-from neuralnet import NeuralNet
-from tools import print_test
+from nimblenet.preprocessing import construct_preprocessor, standarize, replace_nan, whiten
+from nimblenet.activation_functions import tanh_function, softmax_function
+from nimblenet.learning_algorithms  import resilient_backpropagation
+from nimblenet.cost_functions  import softmax_neg_loss
+from nimblenet.data_structures import Instance
+from nimblenet.neuralnet import NeuralNet
+from nimblenet.tools import print_test
 
 
 # Training sets
