@@ -1,12 +1,11 @@
-from activation_functions import sigmoid_function, tanh_function, linear_function,\
-                                 LReLU_function, ReLU_function, elliot_function, symmetric_elliot_function, softmax_function, softplus_function, softsign_function
-from cost_functions import sum_squared_error, cross_entropy_cost, hellinger_distance, softmax_neg_loss
-from learning_algorithms import backpropagation, scaled_conjugate_gradient, scipyoptimize, resilient_backpropagation
-from evaluation_functions import binary_accuracy
-from neuralnet import NeuralNet
-from preprocessing import construct_preprocessor, standarize, replace_nan, whiten
-from data_structures import Instance
-from tools import print_test
+from nimblenet.activation_functions import sigmoid_function, tanh_function, linear_function, LReLU_function, ReLU_function, elliot_function, symmetric_elliot_function, softmax_function, softplus_function, softsign_function
+from nimblenet.cost_functions import sum_squared_error, cross_entropy_cost, hellinger_distance, softmax_neg_loss
+from nimblenet.learning_algorithms import backpropagation, scaled_conjugate_gradient, scipyoptimize, resilient_backpropagation, generalized_hebbian
+from nimblenet.evaluation_functions import binary_accuracy
+from nimblenet.neuralnet import NeuralNet
+from nimblenet.preprocessing import construct_preprocessor, standarize, replace_nan, whiten
+from nimblenet.data_structures import Instance
+from nimblenet.tools import print_test
 
 
 # Training sets
@@ -16,7 +15,7 @@ training_data       = preprocessor( dataset )
 test_data           = preprocessor( dataset )
 
 
-cost_function       = sum_squared_error
+cost_function       = cross_entropy_cost
 settings            = {
     # Required settings
     "n_inputs"              : 2,       # Number of network input signals
@@ -40,14 +39,13 @@ network.check_gradient( training_data, cost_function )
 # network           = NeuralNet.load_network_from_file( "network0.pkl" )
 
 
-## Train the network using backpropagation
+# Train the network using backpropagation
 backpropagation(
         network,                        # the network to train
         training_data,                  # specify the training set
         test_data,                      # specify the test set
         cost_function,                  # specify the cost function to calculate error
         
-        evaluation_function  = binary_accuracy,
         ERROR_LIMIT          = 1e-3,    # define an acceptable error limit 
         #max_iterations      = 100,     # continues until the error limit is reach if this argument is skipped
                     
@@ -84,23 +82,23 @@ backpropagation(
 #    )
 
 
-# Train the network using resilient backpropagation
-resilient_backpropagation(
-        network,
-        training_data,                  # specify the training set
-        test_data,                      # specify the test set
-        cost_function,                  # specify the cost function to calculate error
-        ERROR_LIMIT          = 1e-3,    # define an acceptable error limit
-        #max_iterations      = (),      # continues until the error limit is reach if this argument is skipped
-        
-        # optional parameters
-        weight_step_max      = 50., 
-        weight_step_min      = 0., 
-        start_step           = 0.5, 
-        learn_max            = 1.2, 
-        learn_min            = 0.5,
-        save_trained_network = False    # Whether to write the trained weights to disk
-    )
+## Train the network using resilient backpropagation
+#resilient_backpropagation(
+#        network,
+#        training_data,                  # specify the training set
+#        test_data,                      # specify the test set
+#        cost_function,                  # specify the cost function to calculate error
+#        ERROR_LIMIT          = 1e-3,    # define an acceptable error limit
+#        #max_iterations      = (),      # continues until the error limit is reach if this argument is skipped
+#        
+#        # optional parameters
+#        weight_step_max      = 50., 
+#        weight_step_min      = 0., 
+#        start_step           = 0.5, 
+#        learn_max            = 1.2, 
+#        learn_min            = 0.5,
+#        save_trained_network = False    # Whether to write the trained weights to disk
+#    )
 
 
 # Print a network test
