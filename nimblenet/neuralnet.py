@@ -104,7 +104,7 @@ class NeuralNet:
         
         for i in layer_indexes:
             # Loop over the weight layers in reversed order to calculate the deltas
-            deltas_by_layer.append((np.dot( delta, add_bias(input_signals[i]) )/n_samples).T.flat)
+            deltas_by_layer.append(list((np.dot( delta, add_bias(input_signals[i]) )/n_samples).T.flat))
             
             if i!= 0:
                 # i!= 0 because we don't want calculate the delta unnecessarily.
