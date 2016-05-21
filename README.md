@@ -8,6 +8,11 @@ This is an implementation of a fully connected neural network in NumPy. The netw
 
 <br>
 
+### Installation
+
+- Install with pip: `pip install nimblenet`
+- Clone from Github
+
 ### Requirements
 
 -  Python
