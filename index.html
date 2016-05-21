@@ -206,7 +206,7 @@ network = NeuralNet( settings )
                         </code></pre>
                     </div>
                     <div class="col-md-6">
-                        <p>The second example initializes a two layered network with a softmax activation function.</p>
+                        <p>The second example initialize a two layered network with a softmax activation function.</p>
                         <p>The <code>n_inputs</code> variable defines the number of input values the network will accept.</p>
                     </div>
                 </div>
@@ -269,9 +269,9 @@ test_dataset     = preprocessor( test_dataset     )
                     </div>
                     <div class="col-md-6">
                         <pre class="language-python"><code>
-from nimblenet.cost_functions import sum_squared_error, cross_entropy_cost, hellinger_distance, softmax_neg_loss
+from nimblenet.cost_functions import sum_squared_error, binary_binary_cross_entropy_cost, hellinger_distance, softmax_categorical_cross_entropy_cost
 
-cost_function = softmax_neg_loss # The `softmax_neg_loss` is required when using softmax.
+cost_function = softmax_categorical_cross_entropy_cost # The `softmax_categorical_cross_entropy_cost` is required when using softmax.
 
 # The gradient check test the gradient with 100 entries from the dataset. 
 network.check_gradient( 
@@ -291,10 +291,10 @@ network.check_gradient(
                     </div>
                     <div class="col-md-6">
                         <pre class="language-python"><code>
-from nimblenet.cost_functions import sum_squared_error, cross_entropy_cost, hellinger_distance, softmax_neg_loss
+from nimblenet.cost_functions import sum_squared_error, binary_cross_entropy_cost, hellinger_distance, softmax_categorical_cross_entropy_cost
 from nimblenet.learning_algorithms import backpropagation
 
-cost_function = softmax_neg_loss        # The `softmax_neg_loss` is required when using softmax.
+cost_function = softmax_categorical_cross_entropy_cost        # The `softmax_categorical_cross_entropy_cost` is required when using softmax.
 
 backpropagation(
         network,                        # the network to train
@@ -314,7 +314,7 @@ backpropagation(
                         </code></pre>
                     </div>
                     <div class="col-md-6">
-                        <p>The backpropagation method requires four parameters: the network to train, the training data to fit the network, a testing dataset to monitor overfitting and finally a cost function to determine the gradients. The cost function is freely interchangeable, allthough when using <code>softmax</code>, the cost function must be <code>softmax_neg_loss</code>.</p>
+                        <p>The backpropagation method requires four parameters: the network to train, the training data to fit the network, a testing dataset to monitor overfitting and finally a cost function to determine the gradients. The cost function is freely interchangeable, allthough when using <code>softmax</code>, the cost function must be <code>softmax_categorical_cross_entropy_cost</code>.</p>
                         <p>The fitting routine can be specified to terminate upon reaching an acceptable error or after a given number of iterations.</p>
                         <p>The dropout parameters should be values in the range <code>[0, 1]</code>. The reccomended setting is <code>input_layer_dropout  = 0.5</code> and <code>hidden_layer_dropout = 0.7</code></p>
                     </div>
@@ -326,10 +326,10 @@ backpropagation(
                     </div>
                     <div class="col-md-6">
                         <pre class="language-python"><code>
-from nimblenet.cost_functions import sum_squared_error, cross_entropy_cost, hellinger_distance, softmax_neg_loss
+from nimblenet.cost_functions import sum_squared_error, binary_cross_entropy_cost, hellinger_distance, softmax_categorical_cross_entropy_cost
 from nimblenet.learning_algorithms import scipyoptimize
 
-cost_function = softmax_neg_loss            # The `softmax_neg_loss` is required when using softmax.
+cost_function = softmax_categorical_cross_entropy_cost            # The `softmax_categorical_cross_entropy_cost` is required when using softmax.
 
 scipyoptimize(
         network,
@@ -353,10 +353,10 @@ scipyoptimize(
                     </div>
                     <div class="col-md-6">
                         <pre class="language-python"><code>
-from nimblenet.cost_functions import sum_squared_error, cross_entropy_cost, hellinger_distance, softmax_neg_loss
+from nimblenet.cost_functions import sum_squared_error, binary_cross_entropy_cost, hellinger_distance, softmax_categorical_cross_entropy_cost
 from nimblenet.learning_algorithms import resilient_backpropagation
 
-cost_function = softmax_neg_loss    # The `softmax_neg_loss` is required when using softmax.
+cost_function = softmax_categorical_cross_entropy_cost    # The `softmax_categorical_cross_entropy_cost` is required when using softmax.
 
 resilient_backpropagation(
     network,
@@ -387,10 +387,10 @@ resilient_backpropagation(
                     </div>
                     <div class="col-md-6">
                         <pre class="language-python"><code>
-from nimblenet.cost_functions import sum_squared_error, cross_entropy_cost, hellinger_distance, softmax_neg_loss
+from nimblenet.cost_functions import sum_squared_error, binary_cross_entropy_cost, hellinger_distance, softmax_categorical_cross_entropy_cost
 from nimblenet.learning_algorithms import scaled_conjugate_gradient
 
-cost_function = softmax_neg_loss        # The `softmax_neg_loss` is required when using softmax.
+cost_function = softmax_categorical_cross_entropy_cost        # The `softmax_categorical_cross_entropy_cost` is required when using softmax.
 
 scaled_conjugate_gradient(
         network,
@@ -463,7 +463,7 @@ print network.predict( predict_dataset ) # return a 2D NumPy array [n_samples, n
 from nimblenet.preprocessing import construct_preprocessor, standarize, replace_nan, whiten
 from nimblenet.activation_functions import tanh_function, softmax_function
 from nimblenet.learning_algorithms  import resilient_backpropagation
-from nimblenet.cost_functions  import softmax_neg_loss
+from nimblenet.cost_functions  import softmax_categorical_cross_entropy_cost
 from nimblenet.data_structures import Instance
 from nimblenet.neuralnet import NeuralNet
 from nimblenet.tools import print_test
@@ -476,7 +476,7 @@ training_data       = preprocessor( dataset )
 test_data           = training_data # for simplicity
 
 
-cost_function       = softmax_neg_loss
+cost_function       = softmax_categorical_cross_entropy_cost
 settings            = {
     # Required settings
     "n_inputs"              : 2,       # Number of network input signals
