@@ -207,7 +207,7 @@ network = NeuralNet( settings )
                     </div>
                     <div class="col-md-6">
                         <p>The second example initialize a two layered network with a softmax activation function.</p>
-                        <p>The <code>n_inputs</code> variable defines the number of input values the network will accept.</p>
+                        <p>The <code>n_inputs</code> variable define the number of input values the network will accept.</p>
                     </div>
                 </div>
             </div>
@@ -316,7 +316,7 @@ backpropagation(
                     <div class="col-md-6">
                         <p>The backpropagation method requires four parameters: the network to train, the training data to fit the network, a testing dataset to monitor overfitting and finally a cost function to determine the gradients. The cost function is freely interchangeable, allthough when using <code>softmax</code>, the cost function must be <code>softmax_categorical_cross_entropy_cost</code>.</p>
                         <p>The fitting routine can be specified to terminate upon reaching an acceptable error or after a given number of iterations.</p>
-                        <p>The dropout parameters should be values in the range <code>[0, 1]</code>. The reccomended setting is <code>input_layer_dropout  = 0.5</code> and <code>hidden_layer_dropout = 0.7</code></p>
+                        <p>The dropout parameters should be values in the range <code>[0, 1]</code>. The recommended setting is <code>input_layer_dropout  = 0.5</code> and <code>hidden_layer_dropout = 0.7</code></p>
                     </div>
                 </div>
                 
@@ -343,7 +343,7 @@ scipyoptimize(
                     </div>
                     <div class="col-md-6">
                         <p>This training method requires <code>SciPy</code>.</p>
-                        <p>The <code>method</code> parameter is redirected to SciPy's minimize function. From my own experience, the "Newton-CG" and "L-BFGS-B" are the most efficacious methods.
+                        <p>The <code>method</code> parameter is redirected to SciPy's minimize function. From my own experience, the "Newton-CG" and "L-BFGS-B" are the most effective methods.
                     </div>
                 </div>
                 
@@ -403,7 +403,7 @@ scaled_conjugate_gradient(
                         </code></pre>
                     </div>
                     <div class="col-md-6">
-                        <p>This is an implementation of the <em>Scaled Conjugate Gradient for Fast Supervised Learning</em> approach described by <a href="http://www.sciencedirect.com/science/article/pii/S0893608005800565">Martin Møller</a>.</p>
+                        <p>This is an implementation of <em>Scaled Conjugate Gradient for Fast Supervised Learning</em> published by <a href="http://www.sciencedirect.com/science/article/pii/S0893608005800565">Martin Møller</a>.</p>
                     </div>
                 </div>
             </div>
@@ -480,7 +480,7 @@ cost_function       = softmax_categorical_cross_entropy_cost
 settings            = {
     # Required settings
     "n_inputs"              : 2,       # Number of network input signals
-    "layers"                : [  (5, tanh_function), (1, softmax_function) ],
+    "layers"                : [  (5, tanh_function), (2, softmax_function) ],
                                         # [ (number_of_neurons, activation_function) ]
                                         # The last pair in the list dictate the number of output signals
     
