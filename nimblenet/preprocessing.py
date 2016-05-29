@@ -23,7 +23,11 @@ def standarize( trainingset ):
     def encoder( dataset ):
         manipulated_dataset = copy.deepcopy( dataset )
         for instance in manipulated_dataset:
-            instance.features = (instance.features - means) / stds
+            if np.any(stds == 0):
+                nonzero_indexes = np.where(stds!=0)
+                instance.features[nonzero_indexes] = (instance.features[nonzero_indexes] - means[nonzero_indexes]) / stds[nonzero_indexes]
+            else:
+                instance.features = (instance.features - means) / stds
         return manipulated_dataset
     #end
     
