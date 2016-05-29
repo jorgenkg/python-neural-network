@@ -1,7 +1,7 @@
 from activation_functions import softmax_function
 from cost_functions import softmax_neg_loss
 
-from tools import add_bias
+from tools import add_bias,confirm
 import numpy as np
 
 default_settings = {
@@ -153,7 +153,11 @@ class NeuralNet:
         ratio                   = np.linalg.norm(analytic_gradient - numeric_gradient) / np.linalg.norm(analytic_gradient + numeric_gradient)
         
         if not ratio < 1e-6:
-            raise Exception( "The numeric gradient check failed! %g" % ratio )
+            print "[gradient check] WARNING: The numeric gradient check failed! Analytical gradient differed by %g from the numerical." % ratio
+            if not confirm("[gradient check] Do you want to continue?"):
+                print "[gradient check] Exiting."
+                import sys
+                sys.exit(2)
         else:
             print "[gradient check] Passed!"
         
