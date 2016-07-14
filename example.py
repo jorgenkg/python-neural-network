@@ -1,15 +1,15 @@
-from nimblenet.activation_functions import sigmoid_function, tanh_function, linear_function, LReLU_function, ReLU_function, elliot_function, symmetric_elliot_function, softmax_function, softplus_function, softsign_function
-from nimblenet.cost_functions import sum_squared_error, cross_entropy_cost, hellinger_distance, softmax_neg_loss
+from nimblenet.activation_functions import sigmoid_function
+from nimblenet.cost_functions import cross_entropy_cost
 from nimblenet.learning_algorithms import *
-from nimblenet.evaluation_functions import binary_accuracy
 from nimblenet.neuralnet import NeuralNet
-from nimblenet.preprocessing import construct_preprocessor, standarize, replace_nan, whiten, subtract_mean, normalize
+from nimblenet.preprocessing import construct_preprocessor, standarize
 from nimblenet.data_structures import Instance
 from nimblenet.tools import print_test
 
 
-# Training sets
+# Training set
 dataset             = [ Instance( [0,0], [0] ), Instance( [1,0], [1] ), Instance( [0,1], [1] ), Instance( [1,1], [1] ) ]
+
 preprocess          = construct_preprocessor( dataset, [standarize] ) 
 training_data       = preprocess( dataset )
 test_data           = preprocess( dataset )
@@ -34,8 +34,6 @@ settings            = {
 network             = NeuralNet( settings )
 network.check_gradient( training_data, cost_function )
 
-
-
 ## load a stored network configuration
 # network           = NeuralNet.load_network_from_file( "network0.pkl" )
 
@@ -59,7 +57,7 @@ RMSprop(
         save_trained_network    = False     # Whether to write the trained weights to disk
     )
 
-print network.get_weights()
+
 
 ## Train the network using SciPy
 #scipyoptimize(
