@@ -7,7 +7,6 @@ default_settings = {
     # Optional settings
     "weights_low"           : -0.1,     # Lower bound on initial weight range
     "weights_high"          : 0.1,      # Upper bound on initial weight range
-    "save_trained_network"  : False,    # Whether to write the trained weights to disk
     "initial_bias_value"    : 0.01,
 }
 
