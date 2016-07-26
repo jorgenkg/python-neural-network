@@ -44,7 +44,7 @@ def standarize( trainingset ):
 #end
 
 
-def replace_nan( trainingset, replace_with = None ):
+def replace_nan( trainingset, replace_with = None ): # if replace_with = None, replaces with mean value
     """
     Replace instanced of "not a number" with either the mean of the signal feature
     or a specific value assigned by `replace_nan_with`
