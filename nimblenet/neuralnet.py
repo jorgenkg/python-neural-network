@@ -1,6 +1,5 @@
+from learning_algorithms.commons.utils import check_network_structure, verify_dataset_shape_and_modify
 from activation_functions import softmax_function
-from cost_functions import softmax_neg_loss
-
 from tools import add_bias,confirm
 import numpy as np
 
@@ -8,7 +7,7 @@ default_settings = {
     # Optional settings
     "weights_low"           : -0.1,     # Lower bound on initial weight range
     "weights_high"          : 0.1,      # Upper bound on initial weight range
-    "save_trained_network"  : False,    # Whether to write the trained weights to disk
+    "initial_bias_value"    : 0.01,
 }
 
 class NeuralNet:
@@ -28,7 +27,7 @@ class NeuralNet:
         
         # Initalize the bias to 0.01
         for index in xrange(len(self.layers)):
-            self.weights[index][:1,:] = 0.01
+            self.weights[index][:1,:] = self.initial_bias_value
     #end
     
     
@@ -85,11 +84,6 @@ class NeuralNet:
     
     
     def gradient(self, weight_vector, training_data, training_targets, cost_function ):
-        assert softmax_function != self.layers[-1][1] or cost_function == softmax_neg_loss,\
-            "When using the `softmax` activation function, the cost function MUST be `softmax_neg_loss`."
-        assert cost_function != softmax_neg_loss or softmax_function == self.layers[-1][1],\
-            "When using the `softmax_neg_loss` cost function, the activation function in the final layer MUST be `softmax`."
-        
         # assign the weight_vector as the network topology
         self.set_weights( np.array(weight_vector) )
         
@@ -119,13 +113,9 @@ class NeuralNet:
     
     
     def check_gradient(self, trainingset, cost_function, epsilon = 1e-4 ):
-        assert trainingset[0].features.shape[0] == self.n_inputs, \
-            "ERROR: input size varies from the configuration. Configured as %d, instance had %d" % (self.n_inputs, trainingset[0].features.shape[0])
-        assert trainingset[0].targets.shape[0]  == self.layers[-1][0], \
-            "ERROR: output size varies from the configuration. Configured as %d, instance had %d" % (self.layers[-1][0], trainingset[0].targets.shape[0])
-        
-        training_data           = np.array( [instance.features for instance in trainingset ][:100] ) # perform the test with at most 100 instances
-        training_targets        = np.array( [instance.targets  for instance in trainingset ][:100] )
+        check_network_structure( self, cost_function ) # check for special case topology requirements, such as softmax
+    
+        training_data, training_targets = verify_dataset_shape_and_modify( self, trainingset )
         
         # assign the weight_vector as the network topology
         initial_weights         = np.array(self.get_weights())

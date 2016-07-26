@@ -1,15 +1,15 @@
-from nimblenet.activation_functions import sigmoid_function, tanh_function, linear_function, LReLU_function, ReLU_function, elliot_function, symmetric_elliot_function, softmax_function, softplus_function, softsign_function
-from nimblenet.cost_functions import sum_squared_error, cross_entropy_cost, hellinger_distance, softmax_neg_loss
-from nimblenet.learning_algorithms import backpropagation, scaled_conjugate_gradient, scipyoptimize, resilient_backpropagation
-from nimblenet.evaluation_functions import binary_accuracy
+from nimblenet.activation_functions import sigmoid_function
+from nimblenet.cost_functions import cross_entropy_cost
+from nimblenet.learning_algorithms import *
 from nimblenet.neuralnet import NeuralNet
-from nimblenet.preprocessing import construct_preprocessor, standarize, replace_nan, whiten
+from nimblenet.preprocessing import construct_preprocessor, standarize
 from nimblenet.data_structures import Instance
 from nimblenet.tools import print_test
 
 
-# Training sets
-dataset             = [ Instance( [0,0], [0] ), Instance( [1,0], [1] ), Instance( [0,1], [1] ), Instance( [1,1], [0] ) ]
+# Training set
+dataset             = [ Instance( [0,0], [0] ), Instance( [1,0], [1] ), Instance( [0,1], [1] ), Instance( [1,1], [1] ) ]
+
 preprocess          = construct_preprocessor( dataset, [standarize] ) 
 training_data       = preprocess( dataset )
 test_data           = preprocess( dataset )
@@ -24,6 +24,7 @@ settings            = {
                                         # The last pair in the list dictate the number of output signals
     
     # Optional settings
+    "initial_bias_value"    : 0.0,
     "weights_low"           : -0.1,     # Lower bound on the initial weight value
     "weights_high"          : 0.1,      # Upper bound on the initial weight value
 }
@@ -33,31 +34,29 @@ settings            = {
 network             = NeuralNet( settings )
 network.check_gradient( training_data, cost_function )
 
-
-
 ## load a stored network configuration
 # network           = NeuralNet.load_network_from_file( "network0.pkl" )
 
 
 # Train the network using backpropagation
-backpropagation(
-        network,                        # the network to train
-        training_data,                  # specify the training set
-        test_data,                      # specify the test set
-        cost_function,                  # specify the cost function to calculate error
+RMSprop(
+        network,                            # the network to train
+        training_data,                      # specify the training set
+        test_data,                          # specify the test set
+        cost_function,                      # specify the cost function to calculate error
         
-        ERROR_LIMIT          = 1e-3,    # define an acceptable error limit 
-        #max_iterations      = 100,     # continues until the error limit is reach if this argument is skipped
-                    
-        # optional parameters
-        batch_size           = 1,       # 1 := no batch learning, 0 := entire trainingset as a batch, anything else := batch size
-        print_rate           = 1000,    # print error status every `print_rate` epoch.
-        learning_rate        = 0.3,     # learning rate
-        momentum_factor      = 0.9,     # momentum
-        input_layer_dropout  = 0.0,     # dropout fraction of the input layer
-        hidden_layer_dropout = 0.0,     # dropout fraction in all hidden layers
-        save_trained_network = False    # Whether to write the trained weights to disk
+        ERROR_LIMIT             = 1e-2,     # define an acceptable error limit 
+        #max_iterations         = 100,      # continues until the error limit is reach if this argument is skipped
+                                
+        batch_size              = 0,        # 1 := no batch learning, 0 := entire trainingset as a batch, anything else := batch size
+        print_rate              = 1000,     # print error status every `print_rate` epoch.
+        learning_rate           = 0.3,      # learning rate
+        momentum_factor         = 0.9,      # momentum
+        input_layer_dropout     = 0.0,      # dropout fraction of the input layer
+        hidden_layer_dropout    = 0.0,      # dropout fraction in all hidden layers
+        save_trained_network    = False     # Whether to write the trained weights to disk
     )
+
 
 
 ## Train the network using SciPy
