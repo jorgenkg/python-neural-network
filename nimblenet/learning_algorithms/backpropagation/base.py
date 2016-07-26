@@ -9,7 +9,7 @@ import math
 ["check_network_structure", "verify_dataset_shape_and_modify", "print_training_status", "print_training_results"]
 
 
-def backpropagation_foundation(network, trainingset, testset, cost_function, calculate_dW, evaluation_function = None, ERROR_LIMIT = 1e-3, learning_rate = 0.03, momentum_factor = 0.9, max_iterations = (), batch_size = 0, input_layer_dropout = 0.0, hidden_layer_dropout = 0.0, print_rate = 1000, save_trained_network = False):
+def backpropagation_foundation(network, trainingset, testset, cost_function, calculate_dW, evaluation_function = None, ERROR_LIMIT = 1e-3, max_iterations = (), batch_size = 0, input_layer_dropout = 0.0, hidden_layer_dropout = 0.0, print_rate = 1000, save_trained_network = False, **kwargs):
     check_network_structure( network, cost_function ) # check for special case topology requirements, such as softmax
     
     training_data, training_targets = verify_dataset_shape_and_modify( network, trainingset )
