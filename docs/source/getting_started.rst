@@ -46,7 +46,7 @@ Once nimblenet has been installed, initializing a network is simple. The followi
     network             = NeuralNet( settings )
 
 
-The ``layers`` parameter describe the topology of the network. The first tuple state that the hidden layer should have three neurons and apply the sigmoid activation function. The final tuple in the ``layers`` list *always* describe the number of output signals. A list of built-in activations functions are listed in :docs:`activation_functions`.
+The ``layers`` parameter describe the topology of the network. The first tuple state that the hidden layer should have three neurons and apply the sigmoid activation function. The final tuple in the ``layers`` list *always* describe the number of output signals. A list of built-in activations functions are listed in :doc:`activation_functions`.
 
 .. pull-quote::
     
