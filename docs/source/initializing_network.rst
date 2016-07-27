@@ -11,6 +11,10 @@ In nimblenet, a neural network is configured according to a dict of parameters s
         "layers"   : [ (1, sigmoid_function) ],
     })
 
+.. important::
+    
+    The final tuple in the layers list always describe the number of output signals.
+
 Parameters
 ------------
 

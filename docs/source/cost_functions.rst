@@ -3,6 +3,10 @@ Cost Functions
 
 A the most popular and applicable cost functions has already been implemented in this library, and are listed below. However, it is very easy to specify your own cost functions as described in :ref:`arbirary-cost-functions`.
 
+.. contents::
+   :local:
+   :backlinks: none
+
 .. warning::
 
     The Softmax Categorical Cross Entropy cost function is required when using a softmax layer in the network topology.

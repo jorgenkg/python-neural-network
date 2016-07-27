@@ -17,15 +17,18 @@ Installing
 
     $ pip install nimblenet
 
+Required dependencies
+^^^^^^^^^^^^^^^^^^^^^
+
+* Python 2.7
+* NumPy
 
 Optional dependencies
 ^^^^^^^^^^^^^^^^^^^^^
 
-In order to speed up the code when using the Sigmoid activation functions, the SciPy package should also be installed. This is an optional dependency, but it is of course mandatory if you intend to train the network using SciPy's ``optimize`` function.
+* SciPy
 
-.. code::
-
-    $ pip install scipy
+In order to speed up the code when using the Sigmoid activation functions, the SciPy package should also be installed. This is an optional dependency, but it is of course required if you intend to train the network using SciPy's ``optimize`` function.
 
 
 Creating a Network
@@ -48,7 +51,7 @@ Once nimblenet has been installed, initializing a network is simple. The followi
 
 The ``layers`` parameter describe the topology of the network. The first tuple state that the hidden layer should have three neurons and apply the sigmoid activation function. The final tuple in the ``layers`` list *always* describe the number of output signals. A list of built-in activations functions are listed in :doc:`activation_functions`.
 
-.. pull-quote::
+.. important::
     
     The final tuple in the layers list always describe the number of output signals.
 

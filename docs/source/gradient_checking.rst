@@ -9,7 +9,7 @@ Gradient checking great method for debugging neural networks. The main challenge
 
     Gradient checking against a large dataset is *very* slow.
 
-.. warning::
+.. important::
 
     If the gradient check fails, it will query the user whether to abort or continue executing the script.
 

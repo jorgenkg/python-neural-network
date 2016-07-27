@@ -1,13 +1,11 @@
 Preprocessing
 =======================
 
-This is a work in progress. However, the library has already implementations a few of the most used preprocessing techniques:
+This is a work in progress. However, the library has already implementations a few of the most used preprocessing techniques.
 
-* standardize
-* replace *NaN*
-* subtract the mean
-* normalize
-* whiten
+.. contents::
+   :local:
+   :backlinks: none
 
 A preprocessor can be constructed by combining any number of these techniques, and is intended allow maximum configurability.
 
@@ -80,6 +78,8 @@ Replace *NaN*
 Takes an optional parameter ``replace_with``. By default, it replaces *NaN* with the mean of the given input signal.
 
 In order to replace *NaN* with zero:
+
+.. code:: python
 
     from nimblenet.preprocessing import construct_preprocessor, replace_nan
     from nimblenet.data_structures import Instance

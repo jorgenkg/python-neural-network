@@ -100,7 +100,7 @@ Named variables are shown together with their default value.
             test_set,                    # the test dataset
             cost_function,               # the cost function to optimize
             
-            # Optional parameters
+            # Classical momentum backpropagation specific, optional parameters
             momentum_factor = 0.9        
         )
 
@@ -122,7 +122,7 @@ Named variables are shown together with their default value.
             test_set,                    # the test dataset
             cost_function,               # the cost function to optimize
             
-            # Optional parameters
+            # Nesterov momentum backpropagation specific, optional parameters
             momentum_factor = 0.9        
         )
 
@@ -143,7 +143,7 @@ Named variables are shown together with their default value.
             test_set,                    # the test dataset
             cost_function,               # the cost function to optimize
             
-            # Optional parameters
+            # RMSprop specific, optional parameters
             decay_rate  = 0.99, 
             epsilon     = 1e-8
         )
@@ -166,7 +166,7 @@ Named variables are shown together with their default value.
             test_set,                    # the test dataset
             cost_function,               # the cost function to optimize
             
-            # Optional parameters
+            # Adagrad specific, optional parameters
             epsilon     = 1e-8
         )
 
@@ -188,7 +188,7 @@ Named variables are shown together with their default value.
             test_set,                    # the test dataset
             cost_function,               # the cost function to optimize
             
-            # Optional parameters
+            # Adam specific, optional parameters
             beta1       = 0.9, 
             beta2       = 0.999, 
             epsilon     = 1e-8

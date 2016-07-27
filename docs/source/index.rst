@@ -12,6 +12,21 @@ This is a list of handy links to get up and running.
 * :doc:`storing_network`
 
 
+Installing
+=====================
+
+.. code::
+
+    $ pip install nimblenet
+
+Dependencies
+--------------------
+
+* Python 2.7
+* NumPy
+* SciPy (optional). This is of course a required depedency if you intend to train the network using SciPy's ``optimize`` function.
+    
+
 Content
 ==================
 
