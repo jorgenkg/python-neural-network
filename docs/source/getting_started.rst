@@ -46,13 +46,13 @@ Once nimblenet has been installed, initializing a network is simple. The followi
     network             = NeuralNet( settings )
 
 
-The ``layers`` parameter describe the topology of the network. The first tuple state that the hidden layer should have three neurons and apply the sigmoid activation function. The final tuple in the ``layers`` list *always* describe the number of output signals.
+The ``layers`` parameter describe the topology of the network. The first tuple state that the hidden layer should have three neurons and apply the sigmoid activation function. The final tuple in the ``layers`` list *always* describe the number of output signals. A list of built-in activations functions are listed in :docs:`activation_functions`.
 
 .. pull-quote::
     
     The final tuple in the layers list always describe the number of output signals.
 
-The properties specified in the settings parameter are *required*. The initialization of a network is further customizable, please refer to the page **Initializing a Network**.
+The properties specified in the settings parameter are *required*. The initialization of a network is further customizable, please refer to the page :doc:`initializing_network`.
 
 
 
@@ -79,9 +79,9 @@ The dataset above consist of four training instances with two input signals and 
     test_set = dataset
     
 
-The nimblenet library also offers a selection of preprocessors to manipluate the data and make training more efficient. The preprocessors are not used in this guide, please refer to **Preprocessors** instead.
+The nimblenet library also offers a selection of preprocessors to manipluate the data and make training more efficient. The preprocessors are not used in this guide, please refer to :doc:`preprocessing` instead.
 
-Before fitting the network to some training data, we need to decide which cost function we would like to optimize. There are a few cost functions already implemented in this library, and this guide will use the *Cross Entropy* cost function. However, it is easy to implement your own custom cost functions. Please refer to **Cost Functions**.
+Before fitting the network to some training data, we need to decide which cost function we would like to optimize. There are a few cost functions already implemented in this library, and this guide will use the *Cross Entropy* cost function. However, it is easy to implement your own custom cost functions. Please refer to :doc:`cost_functions`.
 
 .. code:: python
 
@@ -103,7 +103,7 @@ Now that we've specified a cost function, we can use RSMprop to train our networ
             #max_iterations         = 100,      # continues until the error limit is reach if this argument is skipped
         )
 
-If the training shows poor progression, you may try to gradient check the network to verify that the numerical and the analytical gradient are similar. If the gradient check fails, the math might be wrong. Refer to gradient checking here: :ref:`gradient-checking`.
+If the training shows poor progression, you may try to gradient check the network to verify that the numerical and the analytical gradient are similar. If the gradient check fails, the math might be wrong. Refer to gradient checking here: :doc:`gradient_checking`.
 
 Using the Network
 ---------------------
