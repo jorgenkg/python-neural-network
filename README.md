@@ -1,10 +1,22 @@
 # Neural network written in Python (NumPy)
 
-This is an implementation of a fully connected neural network in NumPy. By using the matrix approach to neural networks, this NumPy implementation is able to harvest the power of the BLAS library and efficiently perform the required calculations. The network can be trained by a variety of learning algorithms: backpropagation, resilient backpropagation and scaled conjugate gradient learning.
+This is an implementation of a fully connected neural network in NumPy. By using the matrix approach to neural networks, this NumPy implementation is able to harvest the power of the BLAS library and efficiently perform the required calculations. The network can be trained by a wide range of learning algorithms.
 
 [Visit the project page](http://jorgenkg.github.io/python-neural-network/) or [Read the documentation](https://nimblenet.readthedocs.io/en/latest/index.html).
 
 *The code has been tested.*
+
+## Implemented learning algorithms:
+
+* Vanilla Backpropagation
+* Backpropagation with classical momentum
+* Backpropagation with Nesterov momentum
+* RMSprop
+* Adagrad
+* Adam
+* Resilient Backpropagation
+* Scaled Conjugate Gradient
+* SciPy’s Optimize
 
 ## Installation
 
