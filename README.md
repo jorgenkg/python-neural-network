@@ -1,17 +1,18 @@
 # Neural network written in Python (NumPy)
 
-This is an implementation of a fully connected neural network in NumPy. The network can be trained by a variety of learning algorithms: backpropagation, resilient backpropagation and scaled conjugate gradient learning. By implementing a matrix approach, the NumPy implementation is able to harvest the power of the BLAS library and efficiently perform the required calculations. 
+This is an implementation of a fully connected neural network in NumPy. By using the matrix approach to neural networks, this NumPy implementation is able to harvest the power of the BLAS library and efficiently perform the required calculations. The network can be trained by a variety of learning algorithms: backpropagation, resilient backpropagation and scaled conjugate gradient learning.
+
+[Visit the project page](http://jorgenkg.github.io/python-neural-network/) or [Read the documentation](https://nimblenet.readthedocs.io/en/latest/index.html).
 
 *The code has been tested.*
 
-#### [Visit the project page here.](http://jorgenkg.github.io/python-neural-network/)
-#### [Read the documentation here.](https://nimblenet.readthedocs.io/en/latest/index.html)
-
-<br>
-
 ## Installation
 
-`pip install nimblenet`
+```bash
+
+pip install nimblenet
+
+```
 
 ## Requirements
 
@@ -24,8 +25,9 @@ This script has been written with PYPY in mind. Use their [jit-compiler](http://
 
 ## Features:
 
--  Implemented with matrix operation ensure high performance.
--  Dropout to reduce overfitting ([as desribed here](http://jmlr.org/papers/volume15/srivastava14a/srivastava14a.pdf)). Note that dropout can only be applied to backpropagation.
+-  Implemented with matrix operations to ensure high performance.
+-  Dropout regularization is available to reduce overfitting. [Implemented as desribed here](http://jmlr.org/papers/volume15/srivastava14a/srivastava14a.pdf).
+-  Martin Møller's *Scaled Conjugate Gradient for Fast Supervised Learning* as published [here](http://www.sciencedirect.com/science/article/pii/S0893608005800565).
 -  PYPY friendly (requires pypy-numpy).
 -  Features a selection of cost functions (error functions) and activation functions
 
@@ -33,6 +35,7 @@ This script has been written with PYPY in mind. Use their [jit-compiler](http://
 
 ## Example Usage
 
+```python
 
     from nimblenet.activation_functions import sigmoid_function
     from nimblenet.cost_functions import cross_entropy_cost
@@ -47,7 +50,7 @@ This script has been written with PYPY in mind. Use their [jit-compiler](http://
 
     settings       = {
         "n_inputs" : 2,
-        "layers"   : [  (5, sigmoid_function), (1, sigmoid_function) ]
+        "layers"   : [  (2, sigmoid_function), (1, sigmoid_function) ]
     }
 
     network        = NeuralNet( settings )
@@ -57,13 +60,10 @@ This script has been written with PYPY in mind. Use their [jit-compiler](http://
 
 
     RMSprop(
-            network,                            # the network to train
-            training_set,                      # specify the training set
-            test_set,                          # specify the test set
-            cost_function,                      # specify the cost function to calculate error
-
-            ERROR_LIMIT             = 1e-2,     # define an acceptable error limit
-            #max_iterations         = 100,      # continues until the error limit is reach if this argument is skipped
+            network,           # the network to train
+            training_set,      # specify the training set
+            test_set,          # specify the test set
+            cost_function,     # specify the cost function to calculate error
         )
 
-
+```
