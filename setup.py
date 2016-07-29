@@ -1,11 +1,11 @@
 try:
-    from setuptools import setup
+    from setuptools import setup, find_packages
 except ImportError:
     from distutils.core import setup
 
 setup(
   name             = 'nimblenet',
-  packages         = ['nimblenet'], # this must be the same as the name above
+  packages         = find_packages(),
   version          = '0.2',
   description      = 'Efficient python (NumPy) neural network library.',
   long_description = 'This is an efficient implementation of a fully connected neural network in NumPy. The network can be trained by a variety of learning algorithms: backpropagation, resilient backpropagation and scaled conjugate gradient learning. The network has been developed with PYPY in mind.',
