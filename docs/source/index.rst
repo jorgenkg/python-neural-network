@@ -1,6 +1,5 @@
 .. meta::
-   :name: google-site-verification
-   :content: xfnW5gC61x3VVGiVtVTiPMDdUjlwfiadVdQegYWH8bg
+   :google-site-verification: xfnW5gC61x3VVGiVtVTiPMDdUjlwfiadVdQegYWH8bg
 
 Welcome to nimblenet's documentation!
 =====================================
