@@ -43,6 +43,7 @@ Content
    activation_functions
    learning_algorithms
    cost_functions
+   predicting
    support
    
 

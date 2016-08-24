@@ -120,7 +120,7 @@ After the training has completed, we can verify the training by forward propagat
     >> [[ 0.99735413]
         [ 0.99735378]]
 
-The prediction method returns a two dimensional NumPy list (shape = [n_samples, n_outputs]). The first dimension of the list contain the outputs from the corresponing Instance.
+The prediction method returns a 2D NumPy array with shape :code:`[n_samples, n_outputs]`. The first dimension of the list contain the outputs from the corresponing Instance.
 
 
 Putting it all together
