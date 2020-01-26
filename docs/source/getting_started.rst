@@ -91,7 +91,7 @@ Before fitting the network to some training data, we need to decide which cost f
     from nimblenet.cost_functions import cross_entropy_cost
     cost_function = cross_entropy_cost
 
-Now that we've specified a cost function, we can use RSMprop to train our network:
+Now that we've specified a cost function, we can use RMSprop to train our network:
 
 .. code:: python
 
